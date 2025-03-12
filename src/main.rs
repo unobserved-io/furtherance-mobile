@@ -5,16 +5,30 @@ mod models {
 }
 mod helpers {
     pub mod database;
+    pub mod formatters;
+    pub mod tasks;
     pub mod view_enums;
 }
 mod constants;
 mod localization;
 
-use chrono::Local;
+use std::collections::BTreeMap;
+
+use chrono::{Local, NaiveDate};
 use constants::{FAVICON, MAIN_CSS};
 use dioxus::prelude::*;
-use helpers::database::db_init;
-use models::fur_task::FurTask;
+use helpers::{database::db_init, formatters, tasks};
+use models::{fur_settings::from_settings, fur_task::FurTask, fur_task_group::FurTaskGroup};
+
+#[derive(Debug, Clone, Copy)]
+struct TaskHistory {
+    sorted: Signal<BTreeMap<NaiveDate, Vec<FurTaskGroup>>>,
+}
+
+fn use_task_history_provider() {
+    let sorted = use_signal(|| tasks::get_task_history(365));
+    use_context_provider(|| TaskHistory { sorted });
+}
 
 fn main() {
     db_init().expect("Failed to read or create database");
@@ -23,16 +37,17 @@ fn main() {
 
 #[component]
 fn App() -> Element {
+    use_task_history_provider();
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         document::Stylesheet { href: MAIN_CSS }
-        Timer {}
-        TaskHistory {}
+        TimerView {}
+        TaskHistoryView {}
     }
 }
 
 #[component]
-pub fn Timer() -> Element {
+pub fn TimerView() -> Element {
     rsx! {
         div {
             id: "timer",
@@ -44,58 +59,85 @@ pub fn Timer() -> Element {
 }
 
 #[component]
-pub fn TaskHistory() -> Element {
-    let task_history = use_signal(|| {
-        vec![
-            FurTask {
-                name: String::from("First task"),
-                start_time: Local::now(),
-                stop_time: Local::now(),
-                tags: String::from("one #two"),
-                project: String::from("Proj"),
-                rate: 10.0,
-                currency: String::new(),
-                uid: String::from("fjsdljfjwrkejlj"),
-                is_deleted: false,
-                last_updated: 7432483084028,
-            },
-            FurTask {
-                name: String::from("First task"),
-                start_time: Local::now(),
-                stop_time: Local::now(),
-                tags: String::from("one #two"),
-                project: String::from("Proj"),
-                rate: 10.0,
-                currency: String::new(),
-                uid: String::from("fjsdljfjwrkejlj"),
-                is_deleted: false,
-                last_updated: 7432483084028,
-            },
-            FurTask {
-                name: String::from("Second task"),
-                start_time: Local::now(),
-                stop_time: Local::now(),
-                tags: String::from("one #two"),
-                project: String::from("Proj"),
-                rate: 10.0,
-                currency: String::new(),
-                uid: String::from("fjsdljfjwrkejlj"),
-                is_deleted: false,
-                last_updated: 7432483084028,
-            },
-        ]
-    });
-
+pub fn TaskHistoryView() -> Element {
     rsx! {
         div {
             id: "task-history",
-            for task_group in task_history.iter() {
+            for (date, task_groups) in use_context::<TaskHistory>().sorted.read().iter().rev() {
+                HistoryTitleRow { date: date.clone(), task_groups: task_groups.clone() }
+                for task_group in task_groups {
+                    HistoryGroupContainer { task_group: task_group.clone() }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Element {
+    let (total_time, total_earnings) = task_groups.iter().fold(
+        (0i64, 0f32),
+        |(accumulated_time, accumulated_earnings), group| {
+            let group_time = group.total_time;
+            let group_earnings = (group_time as f32 / 3600.0) * group.rate;
+
+            (
+                accumulated_time + group_time,
+                accumulated_earnings + group_earnings,
+            )
+        },
+    );
+    let total_time_str = formatters::seconds_to_formatted_duration(
+        total_time,
+        from_settings(|settings| settings.show_seconds.clone()),
+    );
+    let formatted_date = formatters::format_history_date(&date);
+
+    rsx! {
+        div {
+            id: "history-title-row",
+            p { "{formatted_date}" }
+            if from_settings(|settings| settings.show_daily_time_total) {
+                p { "{total_time_str}" }
+            }
+        }
+    }
+}
+
+#[component]
+pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
+    let number_of_tasks = task_group.tasks.len();
+    let total_time_str = formatters::seconds_to_formatted_duration(
+        task_group.total_time,
+        from_settings(|settings| settings.show_seconds),
+    );
+
+    rsx! {
+        div {
+            class: "task-bubble",
+            if number_of_tasks > 1 {
                 div {
-                    class: "task-bubble",
-                    p { class: "task-name", "{task_group.name}"}
+                    class: "circle-number",
+                    "{number_of_tasks}"
+                }
+            }
+
+            div {
+                class: "task-bubble-middle",
+                p { class: "task-name", "{task_group.name}"}
+                if from_settings(|settings| settings.show_task_project) {
                     p { class: "task-details", "{task_group.project}"}
+                }
+                if from_settings(|settings| settings.show_task_tags) {
                     p { class: "task-details", "{task_group.tags}"}
                 }
+            }
+
+            div {
+                class: "task-bubble-right",
+                p {
+                    class: "task-group-total-time",
+                    "{total_time_str}" }
             }
         }
     }

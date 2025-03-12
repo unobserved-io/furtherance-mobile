@@ -21,11 +21,19 @@ body {
     white-space: nowrap;
 }
 
-.task-history {
+#task-history {
     padding-top: 10px;
 }
 
+#history-title-row {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+}
+
 .task-bubble {
+    display: flex;
+    align-items: center;
     padding: 0.2rem 1rem;
     text-align: left;
     background: lightgray;
@@ -35,5 +43,31 @@ body {
 }
 
 .task-name {
+    font-weight: bold;
+}
+
+.circle-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: #8e8e93;
+    color: white;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-right: 10px;
+}
+
+.task-bubble-middle {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.task-bubble-right {
+    margin-left: auto;
+}
+
+.task-group-total-time {
     font-weight: bold;
 }

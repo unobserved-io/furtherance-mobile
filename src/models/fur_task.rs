@@ -17,7 +17,7 @@
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct FurTask {
     pub name: String,
     pub start_time: DateTime<Local>,
