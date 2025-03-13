@@ -4,36 +4,30 @@ mod models {
     pub mod fur_task_group;
 }
 mod helpers {
+    pub mod actions;
     pub mod database;
     pub mod formatters;
     pub mod tasks;
     pub mod view_enums;
     pub mod views {
         pub mod task_input;
+        pub mod timer;
     }
 }
 mod constants;
 mod localization;
-
-use std::collections::BTreeMap;
+mod state;
 
 use chrono::NaiveDate;
-use constants::{FAVICON, MAIN_CSS, TASK_INPUT};
+use constants::{FAVICON, MAIN_CSS};
 use dioxus::prelude::*;
-use dioxus_free_icons::{icons::bs_icons::BsPlayFill, Icon, IconShape};
-use helpers::{database::db_init, formatters, tasks, views::task_input::validate_task_input};
+use dioxus_free_icons::{
+    icons::bs_icons::{BsPlayFill, BsStopFill},
+    Icon,
+};
+use helpers::{actions, database::db_init, formatters, views::task_input::validate_task_input};
 use localization::Localization;
 use models::{fur_settings::from_settings, fur_task_group::FurTaskGroup};
-
-#[derive(Debug, Clone, Copy)]
-struct TaskHistory {
-    sorted: Signal<BTreeMap<NaiveDate, Vec<FurTaskGroup>>>,
-}
-
-fn use_task_history_provider() {
-    let sorted = use_signal(|| tasks::get_task_history(365));
-    use_context_provider(|| TaskHistory { sorted });
-}
 
 fn main() {
     db_init().expect("Failed to read or create database");
@@ -42,7 +36,7 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    use_task_history_provider();
+    state::use_task_history_provider();
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         document::Stylesheet { href: MAIN_CSS }
@@ -68,7 +62,7 @@ pub fn TimerView() -> Element {
     rsx! {
         div { id: "timer",
             div {
-                h1 { class: "timer-text", "0:00:00" }
+                h1 { class: "timer-text", "{state::TIMER_TEXT}" }
             }
         }
     }
@@ -77,14 +71,29 @@ pub fn TimerView() -> Element {
 #[component]
 pub fn TaskInputView() -> Element {
     rsx! {
-        form { class: "task-input-form", onsubmit: move |event| { () },
+        form {
+            class: "task-input-form",
+            onsubmit: move |event| {
+                if state::TASK_INPUT.read().trim().is_empty() {
+                    event.prevent_default();
+                } else {
+                    actions::start_stop_pressed();
+                }
+            },
             input {
-                value: "{TASK_INPUT}",
-                oninput: move |event| validate_task_input(event.value()),
+                value: "{state::TASK_INPUT}",
+                oninput: move |event| {
+                    let new_value = validate_task_input(event.value());
+                    *state::TASK_INPUT.write() = new_value;
+                },
                 placeholder: loc!("task-input-placeholder"),
             }
             button { r#type: "submit", class: "start-stop-button",
-                Icon { icon: BsPlayFill, width: 25, height: 25 }
+                if state::TIMER_IS_RUNNING.cloned() {
+                    Icon { icon: BsStopFill, width: 25, height: 25 }
+                } else {
+                    Icon { icon: BsPlayFill, width: 25, height: 25 }
+                }
             }
         }
     }
@@ -94,7 +103,7 @@ pub fn TaskInputView() -> Element {
 pub fn TaskHistoryView() -> Element {
     rsx! {
         div { id: "task-history",
-            for (date , task_groups) in use_context::<TaskHistory>().sorted.read().iter().rev() {
+            for (date , task_groups) in use_context::<state::TaskHistory>().sorted.read().iter().rev() {
                 HistoryTitleRow { date: date.clone(), task_groups: task_groups.clone() }
                 for task_group in task_groups {
                     HistoryGroupContainer { task_group: task_group.clone() }

@@ -16,13 +16,13 @@
 
 use dioxus::signals::Readable;
 
-use crate::constants::{TASK_INPUT, TIMER_IS_RUNNING};
+use crate::state;
 
-pub fn validate_task_input(input: String) {
+pub fn validate_task_input(input: String) -> String {
     // If timer is running, task can never be empty
-    if TIMER_IS_RUNNING.cloned() {
+    if state::TIMER_IS_RUNNING.cloned() {
         if input.trim().is_empty() {
-            return;
+            return String::new();
         }
     }
     let input_trimmed = input.trim_start();
@@ -42,7 +42,7 @@ pub fn validate_task_input(input: String) {
             let after_dollar = &input_trimmed[dollar_index + 1..];
             if after_dollar.is_empty() {
                 // Allow typing the $ in the first place
-                *TASK_INPUT.write() = input_trimmed.to_string();
+                return input_trimmed.to_string();
             } else {
                 // Find the parseable number right after the $
                 let end_index = after_dollar.find(' ').unwrap_or(after_dollar.len());
@@ -56,20 +56,21 @@ pub fn validate_task_input(input: String) {
                     let remaining_str = &after_dollar[end_index..].trim_start();
                     if remaining_str.is_empty() {
                         // Allow a number to be typed after the $
-                        *TASK_INPUT.write() = input_trimmed.to_string();
+                        return input_trimmed.to_string();
                     } else {
                         // Only allow a space, @, or # to be typed after the $ amount
                         if remaining_str.starts_with('@') || remaining_str.starts_with('#') {
-                            *TASK_INPUT.write() = input_trimmed.to_string();
+                            return input_trimmed.to_string();
                         }
                     }
                 }
             }
         } else {
             // If there is no $, no other checks are necessary
-            *TASK_INPUT.write() = input_trimmed.to_string();
+            return input_trimmed.to_string();
         }
     }
+    return state::TASK_INPUT.cloned();
 }
 
 fn has_max_two_decimals(input: &str) -> bool {

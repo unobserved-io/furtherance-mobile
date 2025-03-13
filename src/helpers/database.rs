@@ -147,7 +147,7 @@ pub fn db_init() -> Result<()> {
     Ok(())
 }
 
-pub fn db_insert_task(task: &FurTask) -> Result<()> {
+pub fn insert_task(task: &FurTask) -> Result<()> {
     let conn = Connection::open(db_get_directory())?;
 
     conn.execute(

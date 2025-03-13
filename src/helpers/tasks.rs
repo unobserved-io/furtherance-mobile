@@ -16,9 +16,14 @@
 
 use std::collections::BTreeMap;
 
+use dioxus::{prelude::consume_context, signals::Writable};
+use itertools::Itertools;
+use regex::Regex;
+
 use crate::{
     helpers::database::{db_retrieve_tasks_with_day_limit, SortBy, SortOrder},
     models::{fur_task::FurTask, fur_task_group::FurTaskGroup},
+    state,
 };
 
 pub fn get_task_history(limit: i64) -> BTreeMap<chrono::NaiveDate, Vec<FurTaskGroup>> {
@@ -61,4 +66,44 @@ fn group_tasks_by_date(tasks: Vec<FurTask>) -> BTreeMap<chrono::NaiveDate, Vec<F
     }
 
     grouped_tasks
+}
+
+pub fn update_task_history(days_to_show: i64) {
+    consume_context::<state::TaskHistory>()
+        .sorted
+        .set(get_task_history(days_to_show));
+}
+
+pub fn split_task_input(input: &str) -> (String, String, String, f32) {
+    let re_name = Regex::new(r"^[^@#$]+").unwrap();
+    let re_project = Regex::new(r"@([^#\$]+)").unwrap();
+    let re_tags = Regex::new(r"#([^@#$]+)").unwrap();
+    let re_rate = Regex::new(r"\$([^@#$]+)").unwrap();
+
+    let name = re_name
+        .find(input)
+        .map_or("", |m| m.as_str().trim())
+        .to_string();
+
+    let project = re_project
+        .captures(input)
+        .and_then(|cap| cap.get(1).map(|m| m.as_str().trim().to_string()))
+        .unwrap_or(String::new());
+
+    let tags = re_tags
+        .captures_iter(input)
+        .map(|cap| cap.get(1).unwrap().as_str().trim().to_lowercase())
+        .filter(|s| !s.is_empty())
+        .sorted()
+        .unique()
+        .collect::<Vec<String>>()
+        .join(" #");
+
+    let rate_string = re_rate
+        .captures(input)
+        .and_then(|cap| cap.get(1).map(|m| m.as_str().trim().to_string()))
+        .unwrap_or("0.0".to_string());
+    let rate: f32 = rate_string.parse().unwrap_or(0.0);
+
+    (name, project, tags, rate)
 }
