@@ -8,6 +8,9 @@ mod helpers {
     pub mod formatters;
     pub mod tasks;
     pub mod view_enums;
+    pub mod views {
+        pub mod task_input;
+    }
 }
 mod constants;
 mod localization;
@@ -15,9 +18,11 @@ mod localization;
 use std::collections::BTreeMap;
 
 use chrono::NaiveDate;
-use constants::{FAVICON, MAIN_CSS};
+use constants::{FAVICON, MAIN_CSS, TASK_INPUT};
 use dioxus::prelude::*;
-use helpers::{database::db_init, formatters, tasks};
+use dioxus_free_icons::{icons::bs_icons::BsPlayFill, Icon, IconShape};
+use helpers::{database::db_init, formatters, tasks, views::task_input::validate_task_input};
+use localization::Localization;
 use models::{fur_settings::from_settings, fur_task_group::FurTaskGroup};
 
 #[derive(Debug, Clone, Copy)]
@@ -42,9 +47,9 @@ fn App() -> Element {
         document::Link { rel: "icon", href: FAVICON }
         document::Stylesheet { href: MAIN_CSS }
         // TopNavView {}
-        div {
-            id: "page-content",
+        div { id: "page-content",
             TimerView {}
+            TaskInputView {}
             TaskHistoryView {}
         }
     }
@@ -61,8 +66,7 @@ pub fn TopNavView() -> Element {
 #[component]
 pub fn TimerView() -> Element {
     rsx! {
-        div {
-            id: "timer",
+        div { id: "timer",
             div {
                 h1 { class: "timer-text", "0:00:00" }
             }
@@ -71,11 +75,26 @@ pub fn TimerView() -> Element {
 }
 
 #[component]
+pub fn TaskInputView() -> Element {
+    rsx! {
+        form { class: "task-input-form", onsubmit: move |event| { () },
+            input {
+                value: "{TASK_INPUT}",
+                oninput: move |event| validate_task_input(event.value()),
+                placeholder: loc!("task-input-placeholder"),
+            }
+            button { r#type: "submit", class: "start-stop-button",
+                Icon { icon: BsPlayFill, width: 25, height: 25 }
+            }
+        }
+    }
+}
+
+#[component]
 pub fn TaskHistoryView() -> Element {
     rsx! {
-        div {
-            id: "task-history",
-            for (date, task_groups) in use_context::<TaskHistory>().sorted.read().iter().rev() {
+        div { id: "task-history",
+            for (date , task_groups) in use_context::<TaskHistory>().sorted.read().iter().rev() {
                 HistoryTitleRow { date: date.clone(), task_groups: task_groups.clone() }
                 for task_group in task_groups {
                     HistoryGroupContainer { task_group: task_group.clone() }
@@ -107,19 +126,11 @@ pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Eleme
     let total_earnings_str = format!("${:.2}", total_earnings);
 
     rsx! {
-        div {
-            id: "history-title-row",
-            p {
-                class: "bold",
-                "{formatted_date}"
-            }
+        div { id: "history-title-row",
+            p { class: "bold", "{formatted_date}" }
             if from_settings(|settings| settings.show_daily_time_total) {
-                div {
-                    class: "daily-totals",
-                    p {
-                        class: "bold",
-                        "{total_time_str}"
-                    }
+                div { class: "daily-totals",
+                    p { class: "bold", "{total_time_str}" }
                     if from_settings(|settings| settings.show_task_earnings) && total_earnings > 0.0 {
                         p { "{total_earnings_str}" }
                     }
@@ -140,28 +151,22 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
     let total_earnings_str = format!("${:.2}", total_earnings);
 
     rsx! {
-        div {
-            class: "task-bubble",
+        div { class: "task-bubble",
             if number_of_tasks > 1 {
-                div {
-                    class: "circle-number",
-                    "{number_of_tasks}"
-                }
+                div { class: "circle-number", "{number_of_tasks}" }
             }
 
-            div {
-                class: "task-bubble-middle",
-                p { class: "bold", "{task_group.name}"}
+            div { class: "task-bubble-middle",
+                p { class: "bold", "{task_group.name}" }
                 if from_settings(|settings| settings.show_task_project) {
-                    p { class: "task-details", "{task_group.project}"}
+                    p { class: "task-details", "{task_group.project}" }
                 }
                 if from_settings(|settings| settings.show_task_tags) {
-                    p { class: "task-details", "{task_group.tags}"}
+                    p { class: "task-details", "{task_group.tags}" }
                 }
             }
 
-            div {
-                class: "task-bubble-right",
+            div { class: "task-bubble-right",
                 p { class: "bold", "{total_time_str}" }
                 if from_settings(|settings| settings.show_task_earnings) && task_group.rate > 0.0 {
                     p { "{total_earnings_str}" }

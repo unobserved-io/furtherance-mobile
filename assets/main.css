@@ -1,3 +1,7 @@
+:root {
+    --primary-color: #B179F1;
+}
+
 body {
     /* background-color: #0f1116;
     color: #ffffff; */
@@ -31,6 +35,49 @@ body {
     padding: 0;
     font-weight: bold;
     white-space: nowrap;
+}
+
+.task-input-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1em;
+    gap: 0.5em;
+}
+
+.task-input-form input,
+.start-stop-button {
+    box-sizing: border-box;
+    /* Set both to same height type */
+}
+
+.task-input-form input {
+    width: 90%;
+    height: 2.5rem;
+    font-size: 16px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 3px solid var(--primary-color);
+    outline: none;
+    transition: border-color 0.3s;
+    caret-color: var(--primary-color);
+}
+
+.start-stop-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background-color: var(--primary-color);
+}
+
+.start-stop-button:active {
+    transform: scale(0.95);
+    /* Slight "press" effect */
 }
 
 #task-history {

@@ -16,7 +16,10 @@
 
 use std::sync::Mutex;
 
-use dioxus::prelude::{asset, manganis, Asset};
+use dioxus::{
+    prelude::{asset, manganis, Asset},
+    signals::{Global, GlobalSignal},
+};
 use once_cell::sync::{Lazy, OnceCell};
 
 use crate::{localization::Localization, models::fur_settings::FurSettings};
@@ -40,3 +43,7 @@ pub const MAIN_CSS: Asset = asset!("/assets/main.css");
 
 // Localization
 pub static LOCALIZATION: OnceCell<Localization> = OnceCell::new();
+
+// State
+pub static TIMER_IS_RUNNING: GlobalSignal<bool> = Global::new(|| false);
+pub static TASK_INPUT: GlobalSignal<String> = Global::new(|| String::new());
