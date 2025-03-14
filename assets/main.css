@@ -113,8 +113,13 @@ body {
     text-align: left;
     background: lightgray;
     margin-bottom: 10px;
-    line-height: 0.5rem;
     border-radius: 1rem;
+    min-height: 3rem;
+}
+
+.task-bubble p {
+    margin: 0.2rem 0;
+    line-height: 1.2;
 }
 
 .circle-number {
@@ -135,7 +140,19 @@ body {
     text-align: left;
 }
 
+.task-bubble-middle p,
+.task-bubble-right p {
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
 .task-bubble-right {
     margin-left: auto;
     text-align: right;
+}
+
+.task-details {
+    font-size: 0.9em;
+    line-height: 1.2;
+    margin-top: 0.1rem !important;
 }

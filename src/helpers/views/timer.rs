@@ -23,16 +23,12 @@ use dioxus::{
     signals::Readable,
 };
 
-use crate::{
-    helpers::{database, tasks},
-    models::{fur_settings::from_settings, fur_task::FurTask},
-    state,
-};
+use crate::{formatters, helpers::database, models::fur_task::FurTask, state};
 
 pub fn stop_timer(stop_time: DateTime<Local>) {
     *state::TIMER_IS_RUNNING.write() = false;
 
-    let (name, project, tags, rate) = tasks::split_task_input(&state::TASK_INPUT.cloned());
+    let (name, project, tags, rate) = formatters::split_task_input(&state::TASK_INPUT.cloned());
     database::insert_task(&FurTask::new(
         name,
         state::TIMER_START_TIME.cloned(),

@@ -167,11 +167,13 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
 
             div { class: "task-bubble-middle",
                 p { class: "bold", "{task_group.name}" }
-                if from_settings(|settings| settings.show_task_project) {
-                    p { class: "task-details", "{task_group.project}" }
+                if from_settings(|settings| settings.show_task_project)
+                    && !task_group.project.is_empty()
+                {
+                    p { class: "task-details", "@{task_group.project}" }
                 }
-                if from_settings(|settings| settings.show_task_tags) {
-                    p { class: "task-details", "{task_group.tags}" }
+                if from_settings(|settings| settings.show_task_tags) && !task_group.tags.is_empty() {
+                    p { class: "task-details", "#{task_group.tags}" }
                 }
             }
 
