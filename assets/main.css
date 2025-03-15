@@ -17,9 +17,7 @@ body {
     height: 5rem;
 }
 
-#page-content {
-    margin-top: 50px;
-}
+#page-content {}
 
 #timer {
     display: flex;
@@ -155,4 +153,45 @@ body {
     font-size: 0.9em;
     line-height: 1.2;
     margin-top: 0.1rem !important;
+}
+
+/* Bottom Nav */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    background-color: white;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px 0 20px 0;
+    z-index: 1000;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    text-align: center;
+    padding: 8px 0;
+    color: #8e8e93;
+    transition: color 0.2s;
+    cursor: pointer;
+}
+
+.nav-item.active {
+    color: var(--primary-color);
+}
+
+.nav-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.nav-label {
+    font-size: 12px;
+    font-weight: 500;
 }

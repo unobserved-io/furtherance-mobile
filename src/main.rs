@@ -14,20 +14,21 @@ mod helpers {
         pub mod timer;
     }
 }
+mod views {
+    pub mod timer_view;
+}
 mod constants;
 mod localization;
 mod state;
 
-use chrono::NaiveDate;
 use constants::{FAVICON, MAIN_CSS};
 use dioxus::prelude::*;
 use dioxus_free_icons::{
-    icons::bs_icons::{BsPlayFill, BsStopFill},
-    Icon,
+    icons::bs_icons::{BsBookmark, BsCheck2Circle, BsGear, BsHourglassSplit},
+    Icon, IconShape,
 };
-use helpers::{actions, database::db_init, formatters, views::task_input::validate_task_input};
-use localization::Localization;
-use models::{fur_settings::from_settings, fur_task_group::FurTaskGroup};
+use helpers::{database::db_init, formatters};
+use views::timer_view::TimerView;
 
 fn main() {
     db_init().expect("Failed to read or create database");
@@ -37,20 +38,38 @@ fn main() {
 #[component]
 fn App() -> Element {
     state::use_task_history_provider();
+    let mut active_tab = use_signal(|| NavTab::Timer);
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         document::Stylesheet { href: MAIN_CSS }
-        // TopNavView {}
+        // TopNav {}
+
         div { id: "page-content",
-            TimerView {}
-            TaskInputView {}
-            TaskHistoryView {}
+            match *active_tab.read() {
+                NavTab::Timer => rsx! {
+                    TimerView {}
+                },
+                NavTab::Todos => rsx! {
+                    TimerView {}
+                },
+                NavTab::Shortcuts => rsx! {
+                    TimerView {}
+                },
+                NavTab::Settings => rsx! {
+                    TimerView {}
+                },
+            }
+        }
+
+        BottomNav {
+            active_tab: *active_tab.read(),
+            on_tab_change: move |tab| active_tab.set(tab),
         }
     }
 }
 
 #[component]
-pub fn TopNavView() -> Element {
+pub fn TopNav() -> Element {
     // TODO: Redo this for a better way to protect the safe area
     rsx! {
         div { id: "navbar" }
@@ -58,131 +77,62 @@ pub fn TopNavView() -> Element {
 }
 
 #[component]
-pub fn TimerView() -> Element {
+pub fn BottomNav(active_tab: NavTab, on_tab_change: EventHandler<NavTab>) -> Element {
     rsx! {
-        div { id: "timer",
-            div {
-                h1 { class: "timer-text", "{state::TIMER_TEXT}" }
+        div { class: "bottom-nav",
+            NavItem {
+                icon: BsHourglassSplit,
+                label: "Timer",
+                active: active_tab == NavTab::Timer,
+                onclick: move |_| on_tab_change.call(NavTab::Timer),
+            }
+            NavItem {
+                icon: BsCheck2Circle,
+                label: "Todos",
+                active: active_tab == NavTab::Todos,
+                onclick: move |_| on_tab_change.call(NavTab::Todos),
+            }
+            NavItem {
+                icon: BsBookmark,
+                label: "Shortcuts",
+                active: active_tab == NavTab::Shortcuts,
+                onclick: move |_| on_tab_change.call(NavTab::Shortcuts),
+            }
+            NavItem {
+                icon: BsGear,
+                label: "Settings",
+                active: active_tab == NavTab::Settings,
+                onclick: move |_| on_tab_change.call(NavTab::Settings),
             }
         }
     }
 }
 
 #[component]
-pub fn TaskInputView() -> Element {
+fn NavItem<I: IconShape + Clone + PartialEq + 'static>(
+    icon: I,
+    label: &'static str,
+    active: bool,
+    onclick: EventHandler<MouseEvent>,
+) -> Element {
+    let class = if active {
+        "nav-item active"
+    } else {
+        "nav-item"
+    };
+
     rsx! {
-        form {
-            class: "task-input-form",
-            onsubmit: move |event| {
-                if state::TASK_INPUT.read().trim().is_empty() {
-                    event.prevent_default();
-                } else {
-                    actions::start_stop_pressed();
-                }
-            },
-            input {
-                value: "{state::TASK_INPUT}",
-                oninput: move |event| {
-                    let new_value = validate_task_input(event.value());
-                    *state::TASK_INPUT.write() = new_value;
-                },
-                placeholder: loc!("task-input-placeholder"),
-            }
-            button { r#type: "submit", class: "start-stop-button",
-                if state::TIMER_IS_RUNNING.cloned() {
-                    Icon { icon: BsStopFill, width: 25, height: 25 }
-                } else {
-                    Icon { icon: BsPlayFill, width: 25, height: 25 }
-                }
-            }
+        div { class: "{class}", onclick: move |e| onclick.call(e),
+            Icon { icon, width: 25, height: 25 }
+            span { class: "nav-label", "{label}" }
         }
     }
 }
 
-#[component]
-pub fn TaskHistoryView() -> Element {
-    rsx! {
-        div { id: "task-history",
-            for (date , task_groups) in use_context::<state::TaskHistory>().sorted.read().iter().rev() {
-                HistoryTitleRow { date: date.clone(), task_groups: task_groups.clone() }
-                for task_group in task_groups {
-                    HistoryGroupContainer { task_group: task_group.clone() }
-                }
-            }
-        }
-    }
-}
-
-#[component]
-pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Element {
-    let (total_time, total_earnings) = task_groups.iter().fold(
-        (0i64, 0f32),
-        |(accumulated_time, accumulated_earnings), group| {
-            let group_time = group.total_time;
-            let group_earnings = (group_time as f32 / 3600.0) * group.rate;
-
-            (
-                accumulated_time + group_time,
-                accumulated_earnings + group_earnings,
-            )
-        },
-    );
-    let total_time_str = formatters::seconds_to_formatted_duration(
-        total_time,
-        from_settings(|settings| settings.show_seconds.clone()),
-    );
-    let formatted_date = formatters::format_history_date(&date);
-    let total_earnings_str = format!("${:.2}", total_earnings);
-
-    rsx! {
-        div { id: "history-title-row",
-            p { class: "bold", "{formatted_date}" }
-            if from_settings(|settings| settings.show_daily_time_total) {
-                div { class: "daily-totals",
-                    p { class: "bold", "{total_time_str}" }
-                    if from_settings(|settings| settings.show_task_earnings) && total_earnings > 0.0 {
-                        p { "{total_earnings_str}" }
-                    }
-                }
-            }
-        }
-    }
-}
-
-#[component]
-pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
-    let number_of_tasks = task_group.tasks.len();
-    let total_time_str = formatters::seconds_to_formatted_duration(
-        task_group.total_time,
-        from_settings(|settings| settings.show_seconds),
-    );
-    let total_earnings = task_group.rate * (task_group.total_time as f32 / 3600.0);
-    let total_earnings_str = format!("${:.2}", total_earnings);
-
-    rsx! {
-        div { class: "task-bubble",
-            if number_of_tasks > 1 {
-                div { class: "circle-number", "{number_of_tasks}" }
-            }
-
-            div { class: "task-bubble-middle",
-                p { class: "bold", "{task_group.name}" }
-                if from_settings(|settings| settings.show_task_project)
-                    && !task_group.project.is_empty()
-                {
-                    p { class: "task-details", "@{task_group.project}" }
-                }
-                if from_settings(|settings| settings.show_task_tags) && !task_group.tags.is_empty() {
-                    p { class: "task-details", "#{task_group.tags}" }
-                }
-            }
-
-            div { class: "task-bubble-right",
-                p { class: "bold", "{total_time_str}" }
-                if from_settings(|settings| settings.show_task_earnings) && task_group.rate > 0.0 {
-                    p { "{total_earnings_str}" }
-                }
-            }
-        }
-    }
+#[derive(PartialEq, Copy, Clone)]
+pub enum NavTab {
+    Timer,
+    Todos,
+    Shortcuts,
+    Settings,
 }
