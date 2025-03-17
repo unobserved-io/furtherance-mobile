@@ -19,7 +19,10 @@ use std::collections::BTreeMap;
 use dioxus::{prelude::consume_context, signals::Writable};
 
 use crate::{
-    helpers::database::{db_retrieve_tasks_with_day_limit, SortBy, SortOrder},
+    database::{
+        self,
+        tasks::{SortBy, SortOrder},
+    },
     models::{fur_task::FurTask, fur_task_group::FurTaskGroup},
     state,
 };
@@ -27,7 +30,11 @@ use crate::{
 pub fn get_task_history(limit: i64) -> BTreeMap<chrono::NaiveDate, Vec<FurTaskGroup>> {
     let mut grouped_tasks_by_date: BTreeMap<chrono::NaiveDate, Vec<FurTaskGroup>> = BTreeMap::new();
 
-    match db_retrieve_tasks_with_day_limit(limit, SortBy::StopTime, SortOrder::Descending) {
+    match database::tasks::retrieve_tasks_with_day_limit(
+        limit,
+        SortBy::StopTime,
+        SortOrder::Descending,
+    ) {
         Ok(all_tasks) => {
             let tasks_by_date = group_tasks_by_date(all_tasks);
 

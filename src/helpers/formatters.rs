@@ -28,15 +28,18 @@ pub fn seconds_to_formatted_duration(total_seconds: i64, show_seconds: bool) -> 
     }
 }
 
-pub fn format_history_date(date: &NaiveDate) -> String {
+pub fn format_title_date(date: &NaiveDate) -> String {
     let today = Local::now().date_naive();
     let yesterday = today - TimeDelta::days(1);
+    let tomorrow = today + TimeDelta::days(1);
     let current_year = today.year();
 
     if date == &today {
         loc!("today")
     } else if date == &yesterday {
         loc!("yesterday")
+    } else if date == &tomorrow {
+        loc!("tomorrow")
     } else if date.year() == current_year {
         date.format("%b %d").to_string()
     } else {

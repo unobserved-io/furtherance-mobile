@@ -18,7 +18,6 @@ use std::sync::Mutex;
 
 use dioxus::prelude::{asset, manganis, Asset};
 use once_cell::sync::{Lazy, OnceCell};
-use tokio::task::JoinHandle;
 
 use crate::{localization::Localization, models::fur_settings::FurSettings};
 
@@ -37,10 +36,9 @@ pub const OFFICIAL_SERVER: &str = "https://sync.furtherance.app";
 
 // Assets
 pub const FAVICON: Asset = asset!("/assets/favicon.ico");
-pub const MAIN_CSS: Asset = asset!("/assets/main.css");
+pub const MAIN_CSS: Asset = asset!("/assets/css/main.css");
+pub const TIMER_CSS: Asset = asset!("/assets/css/timer.css");
+pub const TODO_CSS: Asset = asset!("/assets/css/todo.css");
 
 // Localization
 pub static LOCALIZATION: OnceCell<Localization> = OnceCell::new();
-
-// Timer
-// pub static TIMER_TASK_HANDLE: Mutex<Option<JoinHandle<()>>> = Mutex::new(None);

@@ -15,9 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use rusqlite::{params, Connection, Result};
-use std::path::PathBuf;
 
-use crate::models::{fur_settings, fur_task::FurTask};
+use crate::models::fur_task::FurTask;
+
+use super::init::get_directory;
 
 #[derive(Debug)]
 pub enum SortOrder {
@@ -64,91 +65,8 @@ impl SortBy {
     }
 }
 
-pub fn db_get_directory() -> PathBuf {
-    let mut path = fur_settings::get_data_path();
-    path.extend(&["furtherance.db"]);
-    path
-}
-
-fn column_exists(conn: &Connection, table: &str, column: &str) -> Result<bool> {
-    let mut stmt = conn.prepare(&format!(
-        "SELECT COUNT(*) FROM pragma_table_info('{}') WHERE name = ?",
-        table
-    ))?;
-    let count: i64 = stmt.query_row([column], |row| row.get(0))?;
-    Ok(count > 0)
-}
-
-pub fn db_init() -> Result<()> {
-    let conn = Connection::open(db_get_directory())?;
-
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY,
-            task_name TEXT,
-            start_time TIMESTAMP,
-            stop_time TIMESTAMP,
-            tags TEXT,
-            project TEXT,
-            rate REAL,
-            currency TEXT,
-            uid TEXT,
-            is_deleted BOOLEAN DEFAULT 0,
-            last_updated INTEGER DEFAULT 0
-        );",
-        [],
-    )?;
-
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS shortcuts (
-            id INTEGER PRIMARY KEY,
-            name TEXT,
-            tags TEXT,
-            project TEXT,
-            rate REAL,
-            currency TEXT,
-            color_hex TEXT,
-            uid TEXT,
-            is_deleted BOOLEAN DEFAULT 0,
-            last_updated INTEGER DEFAULT 0
-        );",
-        [],
-    )?;
-
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS user (
-            email TEXT PRIMARY KEY,
-            encrypted_key TEXT NOT NULL,
-            key_nonce TEXT NOT NULL,
-            access_token TEXT NOT NULL,
-            refresh_token TEXT NOT NULL,
-            server TEXT NOT NULL
-        )",
-        [],
-    )?;
-
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS todos (
-            id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
-            project TEXT,
-            tags TEXT,
-            rate REAL,
-            currency TEXT,
-            date TIMESTAMP,
-            uid TEXT,
-            is_completed BOOLEAN DEFAULT 0,
-            is_deleted BOOLEAN DEFAULT 0,
-            last_updated INTEGER DEFAULT 0
-        )",
-        [],
-    )?;
-
-    Ok(())
-}
-
 pub fn insert_task(task: &FurTask) -> Result<()> {
-    let conn = Connection::open(db_get_directory())?;
+    let conn = Connection::open(get_directory())?;
 
     conn.execute(
         "INSERT INTO tasks (
@@ -180,8 +98,8 @@ pub fn insert_task(task: &FurTask) -> Result<()> {
     Ok(())
 }
 
-pub fn db_insert_tasks(tasks: &[FurTask]) -> Result<()> {
-    let mut conn = Connection::open(db_get_directory())?;
+pub fn insert_tasks(tasks: &[FurTask]) -> Result<()> {
+    let mut conn = Connection::open(get_directory())?;
 
     let tx = conn.transaction()?;
 
@@ -222,12 +140,9 @@ pub fn db_insert_tasks(tasks: &[FurTask]) -> Result<()> {
     Ok(())
 }
 
-pub fn db_retrieve_all_tasks(
-    sort: SortBy,
-    order: SortOrder,
-) -> Result<Vec<FurTask>, rusqlite::Error> {
+pub fn retrieve_all_tasks(sort: SortBy, order: SortOrder) -> Result<Vec<FurTask>, rusqlite::Error> {
     // Retrieve all tasks from the database
-    let conn = Connection::open(db_get_directory())?;
+    let conn = Connection::open(get_directory())?;
 
     let mut stmt = conn.prepare(
         format!(
@@ -260,12 +175,12 @@ pub fn db_retrieve_all_tasks(
     Ok(tasks_vec)
 }
 
-pub fn db_retrieve_all_existing_tasks(
+pub fn retrieve_all_existing_tasks(
     sort: SortBy,
     order: SortOrder,
 ) -> Result<Vec<FurTask>, rusqlite::Error> {
     // Retrieve all tasks from the database
-    let conn = Connection::open(db_get_directory())?;
+    let conn = Connection::open(get_directory())?;
 
     let mut stmt = conn.prepare(
         format!(
@@ -298,11 +213,8 @@ pub fn db_retrieve_all_existing_tasks(
     Ok(tasks_vec)
 }
 
-pub fn db_retrieve_tasks_by_date_range(
-    start_date: String,
-    end_date: String,
-) -> Result<Vec<FurTask>> {
-    let conn = Connection::open(db_get_directory())?;
+pub fn retrieve_tasks_by_date_range(start_date: String, end_date: String) -> Result<Vec<FurTask>> {
+    let conn = Connection::open(get_directory())?;
     let mut stmt = conn.prepare(
         "SELECT * FROM tasks WHERE start_time BETWEEN ?1 AND ?2 AND is_deleted = 0 ORDER BY start_time ASC",
     )?;
@@ -330,12 +242,12 @@ pub fn db_retrieve_tasks_by_date_range(
 }
 
 /// Retrieve a limited number of days worth of tasks
-pub fn db_retrieve_tasks_with_day_limit(
+pub fn retrieve_tasks_with_day_limit(
     days: i64,
     sort: SortBy,
     order: SortOrder,
 ) -> Result<Vec<FurTask>> {
-    let conn = Connection::open(db_get_directory())?;
+    let conn = Connection::open(get_directory())?;
 
     // Construct the query string dynamically
     let query = format!(
@@ -368,8 +280,8 @@ pub fn db_retrieve_tasks_with_day_limit(
     Ok(tasks_vec)
 }
 
-pub fn db_retrieve_task_by_id(uid: &String) -> Result<Option<FurTask>> {
-    let conn = Connection::open(db_get_directory())?;
+pub fn retrieve_task_by_id(uid: &String) -> Result<Option<FurTask>> {
+    let conn = Connection::open(get_directory())?;
     let mut stmt = conn.prepare("SELECT * FROM tasks WHERE uid = ?")?;
     let mut rows = stmt.query_map([uid.to_string()], |row| {
         Ok(FurTask {
@@ -393,8 +305,8 @@ pub fn db_retrieve_task_by_id(uid: &String) -> Result<Option<FurTask>> {
     }
 }
 
-pub fn db_update_task(task: &FurTask) -> Result<()> {
-    let conn = Connection::open(db_get_directory())?;
+pub fn update_task(task: &FurTask) -> Result<()> {
+    let conn = Connection::open(get_directory())?;
 
     conn.execute(
         "UPDATE tasks SET
@@ -425,8 +337,8 @@ pub fn db_update_task(task: &FurTask) -> Result<()> {
     Ok(())
 }
 
-pub fn db_task_exists(task: &FurTask) -> Result<bool> {
-    let conn = Connection::open(db_get_directory())?;
+pub fn task_exists(task: &FurTask) -> Result<bool> {
+    let conn = Connection::open(get_directory())?;
 
     let query = "
         SELECT 1 FROM tasks
@@ -457,8 +369,8 @@ pub fn db_task_exists(task: &FurTask) -> Result<bool> {
     Ok(exists)
 }
 
-pub fn db_delete_tasks_by_ids(id_list: &[String]) -> Result<()> {
-    let conn = Connection::open(db_get_directory())?;
+pub fn delete_tasks_by_ids(id_list: &[String]) -> Result<()> {
+    let conn = Connection::open(get_directory())?;
     let now = chrono::Utc::now().timestamp();
 
     for id in id_list {

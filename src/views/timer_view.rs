@@ -110,7 +110,7 @@ pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Eleme
         total_time,
         from_settings(|settings| settings.show_seconds.clone()),
     );
-    let formatted_date = formatters::format_history_date(&date);
+    let formatted_date = formatters::format_title_date(&date);
     let total_earnings_str = format!("${:.2}", total_earnings);
 
     rsx! {

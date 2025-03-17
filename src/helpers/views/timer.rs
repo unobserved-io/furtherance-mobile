@@ -17,19 +17,94 @@
 use std::time::Duration;
 
 use chrono::{DateTime, Local};
-use dioxus::{
-    hooks::{use_coroutine, Coroutine, UnboundedReceiver},
-    prelude::spawn,
-    signals::Readable,
-};
+use dioxus::{prelude::spawn, signals::Readable};
+use std::sync::Once;
 
-use crate::{formatters, helpers::database, models::fur_task::FurTask, state};
+use crate::{database, formatters, models::fur_task::FurTask, state};
+
+static TIMER_INIT: Once = Once::new();
+
+pub fn ensure_timer_running() {
+    TIMER_INIT.call_once(|| {
+        spawn(async move {
+            loop {
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                if state::TIMER_IS_RUNNING.cloned() {
+                    let duration =
+                        Local::now().signed_duration_since(state::TIMER_START_TIME.cloned());
+                    let seconds_elapsed = duration.num_seconds();
+                    *state::TIMER_TEXT.write() = get_timer_text(seconds_elapsed);
+
+                    // TODO: Pomodoro
+                    // if self.fur_settings.pomodoro
+                    //     && self.timer_text == "0:00:00".to_string()
+                    //     && seconds_elapsed > 2
+                    // {
+                    //     // Check if idle or other alert is being displayed so as not to replace it
+                    //     if self.displayed_alert.is_none() {
+                    //         if self.pomodoro.on_break {
+                    //             show_notification(
+                    //                 NotificationType::BreakOver,
+                    //                 &self.localization,
+                    //                 self.fur_settings.pomodoro_notification_alarm_sound,
+                    //             );
+                    //             self.displayed_alert = Some(FurAlert::PomodoroBreakOver);
+                    //         } else {
+                    //             show_notification(
+                    //                 NotificationType::PomodoroOver,
+                    //                 &self.localization,
+                    //                 self.fur_settings.pomodoro_notification_alarm_sound,
+                    //             );
+                    //             self.displayed_alert = Some(FurAlert::PomodoroOver);
+                    //         }
+                    //     }
+                    //     return Task::none();
+                    // }
+
+                    // TODO:
+                    // if self.fur_settings.notify_on_idle
+                    //     && self.displayed_alert != Some(FurAlert::PomodoroOver)
+                    // {
+                    //     let idle_time = idle::get_idle_time() as i64;
+                    //     if idle_time >= self.fur_settings.chosen_idle_time * 60
+                    //         && !self.idle.reached
+                    //     {
+                    //         // User is idle
+                    //         self.idle.reached = true;
+                    //         self.idle.start_time = Local::now()
+                    //             - TimeDelta::seconds(self.fur_settings.chosen_idle_time * 60);
+                    //     } else if idle_time < self.fur_settings.chosen_idle_time * 60
+                    //         && self.idle.reached
+                    //         && !self.idle.notified
+                    //     {
+                    //         // User is back - show idle message
+                    //         self.idle.notified = true;
+                    //         show_notification(
+                    //             NotificationType::Idle,
+                    //             &self.localization,
+                    //             self.fur_settings.pomodoro_notification_alarm_sound,
+                    //         );
+                    //         self.displayed_alert = Some(FurAlert::Idle);
+                    //     }
+                    // }
+
+                    // TODO: Write autosave every minute
+                    // if seconds_elapsed > 1 && seconds_elapsed % 60 == 0 {
+                    //     if let Err(e) = write_autosave(&self.task_input, self.timer_start_time) {
+                    //         eprintln!("Error writing autosave: {e}");
+                    //     }
+                    // }
+                }
+            }
+        });
+    });
+}
 
 pub fn stop_timer(stop_time: DateTime<Local>) {
     *state::TIMER_IS_RUNNING.write() = false;
 
     let (name, project, tags, rate) = formatters::split_task_input(&state::TASK_INPUT.cloned());
-    database::insert_task(&FurTask::new(
+    database::tasks::insert_task(&FurTask::new(
         name,
         state::TIMER_START_TIME.cloned(),
         stop_time,
@@ -52,79 +127,7 @@ pub fn start_timer() {
     //     state.pomodoro.sessions += 1;
     // }
 
-    spawn(async move {
-        tokio::time::sleep(Duration::from_secs(1)).await;
-        loop {
-            if state::TIMER_IS_RUNNING.cloned() {
-                let duration = Local::now().signed_duration_since(state::TIMER_START_TIME.cloned());
-                let seconds_elapsed = duration.num_seconds();
-                *state::TIMER_TEXT.write() = get_timer_text(seconds_elapsed);
-
-                // TODO: Pomodoro
-                // if self.fur_settings.pomodoro
-                //     && self.timer_text == "0:00:00".to_string()
-                //     && seconds_elapsed > 2
-                // {
-                //     // Check if idle or other alert is being displayed so as not to replace it
-                //     if self.displayed_alert.is_none() {
-                //         if self.pomodoro.on_break {
-                //             show_notification(
-                //                 NotificationType::BreakOver,
-                //                 &self.localization,
-                //                 self.fur_settings.pomodoro_notification_alarm_sound,
-                //             );
-                //             self.displayed_alert = Some(FurAlert::PomodoroBreakOver);
-                //         } else {
-                //             show_notification(
-                //                 NotificationType::PomodoroOver,
-                //                 &self.localization,
-                //                 self.fur_settings.pomodoro_notification_alarm_sound,
-                //             );
-                //             self.displayed_alert = Some(FurAlert::PomodoroOver);
-                //         }
-                //     }
-                //     return Task::none();
-                // }
-
-                // TODO:
-                // if self.fur_settings.notify_on_idle
-                //     && self.displayed_alert != Some(FurAlert::PomodoroOver)
-                // {
-                //     let idle_time = idle::get_idle_time() as i64;
-                //     if idle_time >= self.fur_settings.chosen_idle_time * 60
-                //         && !self.idle.reached
-                //     {
-                //         // User is idle
-                //         self.idle.reached = true;
-                //         self.idle.start_time = Local::now()
-                //             - TimeDelta::seconds(self.fur_settings.chosen_idle_time * 60);
-                //     } else if idle_time < self.fur_settings.chosen_idle_time * 60
-                //         && self.idle.reached
-                //         && !self.idle.notified
-                //     {
-                //         // User is back - show idle message
-                //         self.idle.notified = true;
-                //         show_notification(
-                //             NotificationType::Idle,
-                //             &self.localization,
-                //             self.fur_settings.pomodoro_notification_alarm_sound,
-                //         );
-                //         self.displayed_alert = Some(FurAlert::Idle);
-                //     }
-                // }
-
-                // TODO: Write autosave every minute
-                // if seconds_elapsed > 1 && seconds_elapsed % 60 == 0 {
-                //     if let Err(e) = write_autosave(&self.task_input, self.timer_start_time) {
-                //         eprintln!("Error writing autosave: {e}");
-                //     }
-                // }
-            } else {
-                break;
-            }
-            tokio::time::sleep(Duration::from_secs(1)).await;
-        }
-    });
+    ensure_timer_running();
 }
 
 fn reset_timer() {

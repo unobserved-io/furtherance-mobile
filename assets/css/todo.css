@@ -1,0 +1,45 @@
+#todo-title-row {
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+#todo-title-row p {
+    margin: 0;
+}
+
+#todo-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+.todo-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.todo-text {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.todo-text p {
+    white-space: normal;
+    overflow-wrap: break-word;
+    margin: 0;
+    padding: 5px 0;
+}
+
+.todo-details {
+    font-size: 0.9em;
+    line-height: 1.2;
+    margin-top: 0.1rem !important;
+}
+
+.todo-start {
+    margin-left: auto;
+    text-align: right;
+}

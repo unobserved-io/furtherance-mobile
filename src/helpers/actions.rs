@@ -17,7 +17,7 @@
 use chrono::Local;
 use dioxus::signals::Readable;
 
-use crate::{models::fur_settings::from_settings, state};
+use crate::{models::fur_settings::from_settings, state, NavTab};
 
 use super::{tasks, views::timer};
 
@@ -45,5 +45,17 @@ pub fn start_stop_pressed() {
         // }
     } else {
         timer::start_timer();
+    }
+}
+
+pub fn start_timer_with_task(task_text: String) {
+    if !state::TIMER_IS_RUNNING.cloned() {
+        *state::TASK_INPUT.write() = task_text;
+        // TODO:
+        // self.inspector_view = None;
+        // self.task_to_add = None;
+        // self.task_to_edit = None;
+        timer::start_timer();
+        *state::ACTIVE_TAB.write() = NavTab::Timer;
     }
 }
