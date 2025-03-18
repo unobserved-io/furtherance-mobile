@@ -82,7 +82,7 @@ pub fn TaskInput() -> Element {
 pub fn TaskHistory() -> Element {
     rsx! {
         div { id: "task-history",
-            for (date , task_groups) in use_context::<state::TaskHistory>().sorted.read().iter().rev() {
+            for (date , task_groups) in use_context::<state::FurState>().tasks.read().iter().rev() {
                 HistoryTitleRow { date: date.clone(), task_groups: task_groups.clone() }
                 for task_group in task_groups {
                     HistoryGroupContainer { task_group: task_group.clone() }

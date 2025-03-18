@@ -41,41 +41,22 @@ pub static TASK_INPUT: GlobalSignal<String> = Global::new(|| String::new());
 pub static TIMER_START_TIME: GlobalSignal<DateTime<Local>> = Global::new(|| Local::now());
 
 #[derive(Debug, Clone, Copy)]
-pub struct TaskHistory {
-    pub sorted: Signal<BTreeMap<NaiveDate, Vec<FurTaskGroup>>>,
-}
-
-pub fn use_task_history_provider() {
-    let sorted = use_signal(|| tasks::get_task_history(365));
-    use_context_provider(|| TaskHistory { sorted });
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct AllTodos {
-    pub sorted: Signal<BTreeMap<NaiveDate, Vec<FurTodo>>>,
-}
-
-pub fn use_all_todos_provider() {
-    let sorted = use_signal(|| todos::get_all_todos());
-    use_context_provider(|| AllTodos { sorted });
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct AllShortcuts {
-    pub shortcuts: Signal<Vec<FurShortcut>>,
-}
-
-pub fn use_all_shortcuts_provider() {
-    let shortcuts = use_signal(|| shortcuts::get_all_shortcuts());
-    use_context_provider(|| AllShortcuts { shortcuts });
-}
-
-#[derive(Debug, Clone, Copy)]
 pub struct FurState {
     pub settings: Signal<FurSettings>,
+    pub shortcuts: Signal<Vec<FurShortcut>>,
+    pub tasks: Signal<BTreeMap<NaiveDate, Vec<FurTaskGroup>>>,
+    pub todos: Signal<BTreeMap<NaiveDate, Vec<FurTodo>>>,
 }
 
 pub fn use_state_provider() {
     let settings = use_signal(|| FurSettings::new().expect("Failed to load settings"));
-    use_context_provider(|| FurState { settings });
+    let shortcuts = use_signal(|| shortcuts::get_all_shortcuts());
+    let tasks = use_signal(|| tasks::get_task_history(365));
+    let todos = use_signal(|| todos::get_all_todos());
+    use_context_provider(|| FurState {
+        settings,
+        shortcuts,
+        tasks,
+        todos,
+    });
 }

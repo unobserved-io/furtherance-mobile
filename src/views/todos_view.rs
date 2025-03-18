@@ -37,7 +37,7 @@ pub fn TodosView() -> Element {
         document::Stylesheet { href: TODO_CSS }
 
         div { id: "todo-list",
-            for (date , todos) in use_context::<state::AllTodos>().sorted.read().iter().rev() {
+            for (date , todos) in use_context::<state::FurState>().todos.read().iter().rev() {
                 TodoTitleRow { date: date.clone() }
                 for todo in todos {
                     TodoListItem { todo: todo.clone() }

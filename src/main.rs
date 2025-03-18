@@ -64,9 +64,6 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    state::use_task_history_provider();
-    state::use_all_todos_provider();
-    state::use_all_shortcuts_provider();
     state::use_state_provider();
     ensure_timer_running();
 

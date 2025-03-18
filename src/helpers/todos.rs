@@ -21,7 +21,7 @@ use crate::state;
 use super::views::todos::get_all_todos;
 
 pub fn update_all_todos() {
-    consume_context::<state::AllTodos>()
-        .sorted
+    consume_context::<state::FurState>()
+        .todos
         .set(get_all_todos());
 }

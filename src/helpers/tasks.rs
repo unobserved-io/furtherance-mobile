@@ -74,7 +74,7 @@ fn group_tasks_by_date(tasks: Vec<FurTask>) -> BTreeMap<chrono::NaiveDate, Vec<F
 }
 
 pub fn update_task_history(days_to_show: i64) {
-    consume_context::<state::TaskHistory>()
-        .sorted
+    consume_context::<state::FurState>()
+        .tasks
         .set(get_task_history(days_to_show));
 }

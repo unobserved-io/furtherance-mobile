@@ -30,7 +30,7 @@ pub fn ShortcutsView() -> Element {
         document::Stylesheet { href: SHORTCUTS_CSS }
 
         div { id: "shortcuts",
-            for shortcut in use_context::<state::AllShortcuts>().shortcuts.read().iter() {
+            for shortcut in use_context::<state::FurState>().shortcuts.read().iter() {
                 ShortcutItem { shortcut: shortcut.clone() }
             }
         }
