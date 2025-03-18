@@ -27,7 +27,10 @@ use crate::{
         tasks,
         views::{shortcuts, todos},
     },
-    models::{fur_shortcut::FurShortcut, fur_task_group::FurTaskGroup, fur_todo::FurTodo},
+    models::{
+        fur_settings::FurSettings, fur_shortcut::FurShortcut, fur_task_group::FurTaskGroup,
+        fur_todo::FurTodo,
+    },
     NavTab,
 };
 
@@ -65,4 +68,14 @@ pub struct AllShortcuts {
 pub fn use_all_shortcuts_provider() {
     let shortcuts = use_signal(|| shortcuts::get_all_shortcuts());
     use_context_provider(|| AllShortcuts { shortcuts });
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct FurState {
+    pub settings: Signal<FurSettings>,
+}
+
+pub fn use_state_provider() {
+    let settings = use_signal(|| FurSettings::new().expect("Failed to load settings"));
+    use_context_provider(|| FurState { settings });
 }

@@ -26,6 +26,7 @@ mod helpers {
     pub mod todos;
 }
 mod views {
+    pub mod settings_view;
     pub mod shortcuts_view;
     pub mod timer_view;
     pub mod todos_view;
@@ -43,7 +44,10 @@ use dioxus_free_icons::{
 };
 use helpers::{formatters, views::timer::ensure_timer_running};
 use state::ACTIVE_TAB;
-use views::{shortcuts_view::ShortcutsView, timer_view::TimerView, todos_view::TodosView};
+use views::{
+    settings_view::SettingsView, shortcuts_view::ShortcutsView, timer_view::TimerView,
+    todos_view::TodosView,
+};
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum NavTab {
@@ -63,6 +67,7 @@ fn App() -> Element {
     state::use_task_history_provider();
     state::use_all_todos_provider();
     state::use_all_shortcuts_provider();
+    state::use_state_provider();
     ensure_timer_running();
 
     rsx! {
@@ -82,7 +87,7 @@ fn App() -> Element {
                     ShortcutsView {}
                 },
                 NavTab::Settings => rsx! {
-                    TimerView {}
+                    SettingsView {}
                 },
             }
         }

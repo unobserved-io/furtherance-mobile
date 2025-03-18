@@ -40,6 +40,7 @@ pub const MAIN_CSS: Asset = asset!("/assets/css/main.css");
 pub const TIMER_CSS: Asset = asset!("/assets/css/timer.css");
 pub const TODO_CSS: Asset = asset!("/assets/css/todo.css");
 pub const SHORTCUTS_CSS: Asset = asset!("/assets/css/shortcuts.css");
+pub const SETTINGS_CSS: Asset = asset!("/assets/css/settings.css");
 
 // Localization
 pub static LOCALIZATION: OnceCell<Localization> = OnceCell::new();
