@@ -23,8 +23,11 @@ use dioxus::{
 };
 
 use crate::{
-    helpers::{tasks, views::todos},
-    models::{fur_task_group::FurTaskGroup, fur_todo::FurTodo},
+    helpers::{
+        tasks,
+        views::{shortcuts, todos},
+    },
+    models::{fur_shortcut::FurShortcut, fur_task_group::FurTaskGroup, fur_todo::FurTodo},
     NavTab,
 };
 
@@ -52,4 +55,14 @@ pub struct AllTodos {
 pub fn use_all_todos_provider() {
     let sorted = use_signal(|| todos::get_all_todos());
     use_context_provider(|| AllTodos { sorted });
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct AllShortcuts {
+    pub shortcuts: Signal<Vec<FurShortcut>>,
+}
+
+pub fn use_all_shortcuts_provider() {
+    let shortcuts = use_signal(|| shortcuts::get_all_shortcuts());
+    use_context_provider(|| AllShortcuts { shortcuts });
 }

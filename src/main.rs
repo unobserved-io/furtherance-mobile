@@ -1,20 +1,24 @@
 mod models {
     pub mod fur_settings;
+    pub mod fur_shortcut;
     pub mod fur_task;
     pub mod fur_task_group;
     pub mod fur_todo;
 }
 pub mod database {
     pub mod init;
+    pub mod shortcuts;
     pub mod tasks;
     pub mod todos;
 }
 mod helpers {
     pub mod actions;
+    pub mod color_utils;
     pub mod formatters;
     pub mod tasks;
     pub mod view_enums;
     pub mod views {
+        pub mod shortcuts;
         pub mod task_input;
         pub mod timer;
         pub mod todos;
@@ -22,6 +26,7 @@ mod helpers {
     pub mod todos;
 }
 mod views {
+    pub mod shortcuts_view;
     pub mod timer_view;
     pub mod todos_view;
 }
@@ -29,7 +34,7 @@ mod constants;
 mod localization;
 mod state;
 
-use constants::{FAVICON, MAIN_CSS, TIMER_CSS, TODO_CSS};
+use constants::{FAVICON, MAIN_CSS, TIMER_CSS};
 use database::init::db_init;
 use dioxus::prelude::*;
 use dioxus_free_icons::{
@@ -38,7 +43,7 @@ use dioxus_free_icons::{
 };
 use helpers::{formatters, views::timer::ensure_timer_running};
 use state::ACTIVE_TAB;
-use views::{timer_view::TimerView, todos_view::TodosView};
+use views::{shortcuts_view::ShortcutsView, timer_view::TimerView, todos_view::TodosView};
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum NavTab {
@@ -57,14 +62,13 @@ fn main() {
 fn App() -> Element {
     state::use_task_history_provider();
     state::use_all_todos_provider();
+    state::use_all_shortcuts_provider();
     ensure_timer_running();
-    // let mut active_tab = use_signal(|| NavTab::Timer);
+
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         document::Stylesheet { href: MAIN_CSS }
         document::Stylesheet { href: TIMER_CSS }
-        document::Stylesheet { href: TODO_CSS }
-        // TopNav {}
 
         div { id: "page-content",
             match ACTIVE_TAB.cloned() {
@@ -75,7 +79,7 @@ fn App() -> Element {
                     TodosView {}
                 },
                 NavTab::Shortcuts => rsx! {
-                    TimerView {}
+                    ShortcutsView {}
                 },
                 NavTab::Settings => rsx! {
                     TimerView {}
@@ -84,14 +88,6 @@ fn App() -> Element {
         }
 
         BottomNav {}
-    }
-}
-
-#[component]
-pub fn TopNav() -> Element {
-    // TODO: Redo this for a better way to protect the safe area
-    rsx! {
-        div { id: "navbar" }
     }
 }
 

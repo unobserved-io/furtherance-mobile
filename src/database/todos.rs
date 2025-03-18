@@ -20,7 +20,7 @@ use crate::models::fur_todo::FurTodo;
 
 use super::init::get_directory;
 
-pub fn db_retrieve_all_todos() -> Result<Vec<FurTodo>, rusqlite::Error> {
+pub fn retrieve_all_todos() -> Result<Vec<FurTodo>, rusqlite::Error> {
     let conn = Connection::open(get_directory())?;
 
     let mut stmt = conn.prepare("SELECT * FROM todos ORDER BY name")?;
@@ -47,10 +47,7 @@ pub fn db_retrieve_all_todos() -> Result<Vec<FurTodo>, rusqlite::Error> {
     Ok(todos)
 }
 
-pub fn db_retrieve_todos_between_dates(
-    start_date: String,
-    end_date: String,
-) -> Result<Vec<FurTodo>> {
+pub fn retrieve_todos_between_dates(start_date: String, end_date: String) -> Result<Vec<FurTodo>> {
     let conn = Connection::open(get_directory())?;
 
     let mut stmt =
@@ -79,7 +76,7 @@ pub fn db_retrieve_todos_between_dates(
     Ok(todo_vec)
 }
 
-pub fn db_retrieve_todos_since_timestamp(timestamp: i64) -> Result<Vec<FurTodo>, rusqlite::Error> {
+pub fn retrieve_todos_since_timestamp(timestamp: i64) -> Result<Vec<FurTodo>, rusqlite::Error> {
     let conn = Connection::open(get_directory())?;
 
     let mut stmt =
@@ -107,7 +104,7 @@ pub fn db_retrieve_todos_since_timestamp(timestamp: i64) -> Result<Vec<FurTodo>,
     Ok(todos)
 }
 
-pub fn db_retrieve_todo_by_id(uid: &String) -> Result<Option<FurTodo>> {
+pub fn retrieve_todo_by_id(uid: &String) -> Result<Option<FurTodo>> {
     let conn = Connection::open(get_directory())?;
     let mut stmt = conn.prepare("SELECT * FROM todos WHERE uid = ?")?;
     let mut rows = stmt.query_map([uid.to_string()], |row| {
@@ -164,7 +161,7 @@ pub fn update_todo(todo: &FurTodo) -> Result<()> {
     Ok(())
 }
 
-pub fn db_insert_todo(todo: &FurTodo) -> Result<()> {
+pub fn insert_todo(todo: &FurTodo) -> Result<()> {
     let conn = Connection::open(get_directory())?;
 
     conn.execute(
@@ -197,7 +194,7 @@ pub fn db_insert_todo(todo: &FurTodo) -> Result<()> {
     Ok(())
 }
 
-pub fn db_toggle_todo_completed(uid: &str) -> Result<()> {
+pub fn toggle_todo_completed(uid: &str) -> Result<()> {
     let conn = Connection::open(get_directory())?;
     let now = chrono::Utc::now().timestamp();
 
@@ -212,7 +209,7 @@ pub fn db_toggle_todo_completed(uid: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn db_set_todo_completed(uid: &str) -> Result<()> {
+pub fn set_todo_completed(uid: &str) -> Result<()> {
     let conn = Connection::open(get_directory())?;
     let now = chrono::Utc::now().timestamp();
 
@@ -227,7 +224,7 @@ pub fn db_set_todo_completed(uid: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn db_delete_todo_by_id(uid: &str) -> Result<()> {
+pub fn delete_todo_by_id(uid: &str) -> Result<()> {
     let conn = Connection::open(get_directory())?;
     let now = chrono::Utc::now().timestamp();
 

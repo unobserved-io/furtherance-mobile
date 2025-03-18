@@ -21,7 +21,7 @@ use dioxus_free_icons::{
     Icon,
 };
 
-use crate::state;
+use crate::{constants::TODO_CSS, state};
 use crate::{database, helpers::actions};
 use crate::{
     helpers::{self, formatters},
@@ -34,6 +34,8 @@ static CHECK_BOX_SIZE: u32 = 14;
 #[component]
 pub fn TodosView() -> Element {
     rsx! {
+        document::Stylesheet { href: TODO_CSS }
+
         div { id: "todo-list",
             for (date , todos) in use_context::<state::AllTodos>().sorted.read().iter().rev() {
                 TodoTitleRow { date: date.clone() }

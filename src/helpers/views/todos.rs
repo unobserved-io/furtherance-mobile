@@ -25,7 +25,7 @@ pub fn get_all_todos() -> BTreeMap<chrono::NaiveDate, Vec<FurTodo>> {
     let past_limit = Local::now() - TimeDelta::days(60);
     let mut todos_by_date: BTreeMap<chrono::NaiveDate, Vec<FurTodo>> = BTreeMap::new();
 
-    match database::todos::db_retrieve_todos_between_dates(
+    match database::todos::retrieve_todos_between_dates(
         past_limit.to_string(),
         future_limit.to_string(),
     ) {
