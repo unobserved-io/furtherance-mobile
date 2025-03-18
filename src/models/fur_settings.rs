@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::constants::SETTINGS;
 use crate::helpers::view_enums::FurView;
 
 use config::{Config, ConfigError, File};
@@ -22,9 +21,8 @@ use directories::BaseDirs;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::sync::Mutex;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FurSettings {
     pub chosen_idle_time: i64,
     pub days_to_show: i64,
@@ -365,34 +363,6 @@ pub fn get_data_path() -> PathBuf {
         std::fs::create_dir_all(&fallback).ok();
         fallback
     }
-}
-
-fn get_settings_mutex() -> &'static Mutex<FurSettings> {
-    &SETTINGS
-}
-
-/// Access settings for reading
-pub fn from_settings<F, R>(f: F) -> R
-where
-    F: FnOnce(&FurSettings) -> R,
-{
-    let settings = get_settings_mutex().lock().unwrap_or_else(|poisoned| {
-        eprintln!("Warning: Settings mutex was poisoned, recovering data");
-        poisoned.into_inner()
-    });
-    f(&settings)
-}
-
-/// Access settings for modification
-pub fn from_settings_mut<F, R>(f: F) -> R
-where
-    F: FnOnce(&mut FurSettings) -> R,
-{
-    let mut settings = get_settings_mutex().lock().unwrap_or_else(|poisoned| {
-        eprintln!("Warning: Settings mutex was poisoned, recovering  data");
-        poisoned.into_inner()
-    });
-    f(&mut settings)
 }
 
 fn get_settings_path() -> PathBuf {

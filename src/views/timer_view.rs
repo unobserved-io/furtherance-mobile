@@ -24,7 +24,7 @@ use dioxus_free_icons::{
 use crate::helpers::{actions, formatters, views::task_input::validate_task_input};
 use crate::loc;
 use crate::localization::Localization;
-use crate::models::{fur_settings::from_settings, fur_task_group::FurTaskGroup};
+use crate::models::fur_task_group::FurTaskGroup;
 use crate::state;
 
 #[component]
@@ -108,7 +108,10 @@ pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Eleme
     );
     let total_time_str = formatters::seconds_to_formatted_duration(
         total_time,
-        from_settings(|settings| settings.show_seconds.clone()),
+        use_context::<state::FurState>()
+            .settings
+            .read()
+            .show_seconds,
     );
     let formatted_date = formatters::format_title_date(&date);
     let total_earnings_str = format!("${:.2}", total_earnings);
@@ -116,10 +119,12 @@ pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Eleme
     rsx! {
         div { id: "history-title-row",
             p { class: "bold", "{formatted_date}" }
-            if from_settings(|settings| settings.show_daily_time_total) {
+            if use_context::<state::FurState>().settings.read().show_daily_time_total {
                 div { class: "daily-totals",
                     p { class: "bold", "{total_time_str}" }
-                    if from_settings(|settings| settings.show_task_earnings) && total_earnings > 0.0 {
+                    if use_context::<state::FurState>().settings.read().show_task_earnings
+                        && total_earnings > 0.0
+                    {
                         p { "{total_earnings_str}" }
                     }
                 }
@@ -133,7 +138,10 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
     let number_of_tasks = task_group.tasks.len();
     let total_time_str = formatters::seconds_to_formatted_duration(
         task_group.total_time,
-        from_settings(|settings| settings.show_seconds),
+        use_context::<state::FurState>()
+            .settings
+            .read()
+            .show_seconds,
     );
     let total_earnings = task_group.rate * (task_group.total_time as f32 / 3600.0);
     let total_earnings_str = format!("${:.2}", total_earnings);
@@ -146,19 +154,23 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
 
             div { class: "task-bubble-middle",
                 p { class: "bold", "{task_group.name}" }
-                if from_settings(|settings| settings.show_task_project)
+                if use_context::<state::FurState>().settings.read().show_task_project
                     && !task_group.project.is_empty()
                 {
                     p { class: "task-details", "@{task_group.project}" }
                 }
-                if from_settings(|settings| settings.show_task_tags) && !task_group.tags.is_empty() {
+                if use_context::<state::FurState>().settings.read().show_task_tags
+                    && !task_group.tags.is_empty()
+                {
                     p { class: "task-details", "#{task_group.tags}" }
                 }
             }
 
             div { class: "task-bubble-right",
                 p { class: "bold", "{total_time_str}" }
-                if from_settings(|settings| settings.show_task_earnings) && task_group.rate > 0.0 {
+                if use_context::<state::FurState>().settings.read().show_task_earnings
+                    && task_group.rate > 0.0
+                {
                     p { "{total_earnings_str}" }
                 }
             }

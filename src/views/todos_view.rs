@@ -21,13 +21,13 @@ use dioxus_free_icons::{
     Icon,
 };
 
+use crate::state::TIMER_IS_RUNNING;
 use crate::{constants::TODO_CSS, state};
 use crate::{database, helpers::actions};
 use crate::{
     helpers::{self, formatters},
     models::fur_todo::FurTodo,
 };
-use crate::{models::fur_settings::from_settings, state::TIMER_IS_RUNNING};
 
 static CHECK_BOX_SIZE: u32 = 14;
 
@@ -92,12 +92,20 @@ fn TodoListItem(todo: FurTodo) -> Element {
                 p { class: if todo.is_completed { "strikethrough" } else { "" },
                     span { class: "bold", "{todo.name}" }
 
-                    if from_settings(|settings| settings.show_todo_project) && !todo.project.is_empty() {
+                    if use_context::<state::FurState>().settings.read().show_todo_project
+                        && !todo.project.is_empty()
+                    {
                         "  @{todo.project}"
                     }
 
-                    if from_settings(|settings| settings.show_todo_tags) && !todo.tags.is_empty() {
+                    if use_context::<state::FurState>().settings.read().show_todo_tags
+                        && !todo.tags.is_empty()
+                    {
                         "  #{todo.tags}"
+                    }
+
+                    if use_context::<state::FurState>().settings.read().show_todo_rate && todo.rate > 0.0 {
+                        "  ${todo.rate}"
                     }
                 }
             }

@@ -27,8 +27,6 @@ pub const DEBUG_MODE: bool = cfg!(debug_assertions);
 pub const FURTHERANCE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // Settings
-pub static SETTINGS: Lazy<Mutex<FurSettings>> =
-    Lazy::new(|| Mutex::new(FurSettings::new().expect("Failed to load settings")));
 pub const SETTINGS_MESSAGE_DURATION: u64 = 8;
 
 // Sync

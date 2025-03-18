@@ -16,11 +16,7 @@
 
 use dioxus::prelude::*;
 
-use crate::{
-    constants::SETTINGS_CSS,
-    models::fur_settings::{from_settings, from_settings_mut},
-    state,
-};
+use crate::{constants::SETTINGS_CSS, state};
 
 #[component]
 pub fn SettingsView() -> Element {
@@ -55,7 +51,10 @@ pub fn SettingsView() -> Element {
                     label: "Extended break".to_string(),
                     toggled: current_value,
                     onchange: move |_| {
-                        state.settings.write().pomodoro = !current_value;
+                        let mut settings_clone = state.settings.read().clone();
+                        if let Ok(_) = settings_clone.change_pomodoro(&!current_value) {
+                            state.settings.set(settings_clone);
+                        }
                     },
                 }
             }
