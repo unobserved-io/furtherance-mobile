@@ -24,12 +24,15 @@ use dioxus::{
 
 use crate::{
     helpers::{
-        tasks,
-        views::{shortcuts, todos},
+        server,
+        views::{shortcuts, task_history, todos},
     },
     models::{
-        fur_settings::FurSettings, fur_shortcut::FurShortcut, fur_task_group::FurTaskGroup,
+        fur_settings::FurSettings,
+        fur_shortcut::FurShortcut,
+        fur_task_group::FurTaskGroup,
         fur_todo::FurTodo,
+        fur_user::{FurUser, FurUserFields},
     },
     NavTab,
 };
@@ -46,17 +49,24 @@ pub struct FurState {
     pub shortcuts: Signal<Vec<FurShortcut>>,
     pub tasks: Signal<BTreeMap<NaiveDate, Vec<FurTaskGroup>>>,
     pub todos: Signal<BTreeMap<NaiveDate, Vec<FurTodo>>>,
+    pub user: Signal<Option<FurUser>>,
+    pub user_fields: Signal<FurUserFields>,
 }
 
 pub fn use_state_provider() {
     let settings = use_signal(|| FurSettings::new().expect("Failed to load settings"));
     let shortcuts = use_signal(|| shortcuts::get_all_shortcuts());
-    let tasks = use_signal(|| tasks::get_task_history(365));
+    let tasks = use_signal(|| task_history::get_task_history(365));
     let todos = use_signal(|| todos::get_all_todos());
+    let user = use_signal(|| server::sync::get_user());
+    let user_fields = use_signal(|| server::sync::get_user_fields());
+
     use_context_provider(|| FurState {
         settings,
         shortcuts,
         tasks,
         todos,
+        user,
+        user_fields,
     });
 }

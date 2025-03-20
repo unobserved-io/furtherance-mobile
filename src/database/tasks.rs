@@ -305,6 +305,69 @@ pub fn retrieve_task_by_id(uid: &String) -> Result<Option<FurTask>> {
     }
 }
 
+pub fn retrieve_tasks_since_timestamp(timestamp: i64) -> Result<Vec<FurTask>, rusqlite::Error> {
+    let conn = Connection::open(get_directory())?;
+
+    let mut stmt =
+        conn.prepare("SELECT * FROM tasks WHERE last_updated >= ? ORDER BY last_updated ASC")?;
+    let mut rows = stmt.query(params![timestamp])?;
+
+    let mut tasks_vec: Vec<FurTask> = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        let fur_task = FurTask {
+            name: row.get(1)?,
+            start_time: row.get(2)?,
+            stop_time: row.get(3)?,
+            tags: row.get(4)?,
+            project: row.get(5)?,
+            rate: row.get(6)?,
+            currency: row.get(7).unwrap_or(String::new()),
+            uid: row.get(8)?,
+            is_deleted: row.get(9)?,
+            last_updated: row.get(10)?,
+        };
+        tasks_vec.push(fur_task);
+    }
+
+    Ok(tasks_vec)
+}
+
+pub fn retrieve_orphaned_tasks(task_uids: Vec<String>) -> Result<Vec<FurTask>> {
+    let mut conn = Connection::open(get_directory())?;
+    let mut tasks = Vec::new();
+
+    let tx = conn.transaction()?;
+    {
+        let mut stmt = tx.prepare("SELECT * FROM tasks WHERE uid = ?")?;
+
+        for uid in task_uids {
+            let task_iter = stmt.query_map(params![uid], |row| {
+                Ok(FurTask {
+                    name: row.get(1)?,
+                    start_time: row.get(2)?,
+                    stop_time: row.get(3)?,
+                    tags: row.get(4)?,
+                    project: row.get(5)?,
+                    rate: row.get(6)?,
+                    currency: row.get(7).unwrap_or(String::new()),
+                    uid: row.get(8)?,
+                    is_deleted: row.get(9)?,
+                    last_updated: row.get(10)?,
+                })
+            })?;
+
+            // Collect any matching tasks
+            for task in task_iter {
+                tasks.push(task?);
+            }
+        }
+    }
+
+    tx.commit()?;
+    Ok(tasks)
+}
+
 pub fn update_task(task: &FurTask) -> Result<()> {
     let conn = Connection::open(get_directory())?;
 

@@ -14,14 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use dioxus::{prelude::consume_context, signals::Writable};
+use crate::{constants::OFFICIAL_SERVER, helpers::views::settings::ServerChoices};
 
-use crate::state;
+#[derive(Clone, Debug, PartialEq)]
+pub struct FurUser {
+    pub email: String,
+    pub encrypted_key: String,
+    pub key_nonce: String,
+    pub access_token: String,
+    pub refresh_token: String,
+    pub server: String,
+}
 
-use super::views::todos::get_all_todos;
+#[derive(Debug, Clone)]
+pub struct FurUserFields {
+    pub email: String,
+    pub encryption_key: String,
+    pub server: String,
+    pub server_selection: ServerChoices,
+}
 
-pub fn update_all_todos() {
-    consume_context::<state::FurState>()
-        .todos
-        .set(get_all_todos());
+impl Default for FurUserFields {
+    fn default() -> Self {
+        FurUserFields {
+            email: String::new(),
+            encryption_key: String::new(),
+            server: OFFICIAL_SERVER.to_string(),
+            server_selection: ServerChoices::Official,
+        }
+    }
 }

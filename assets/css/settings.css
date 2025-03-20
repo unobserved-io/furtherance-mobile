@@ -19,6 +19,13 @@
     justify-content: space-between;
     padding: 12px 16px;
     position: relative;
+    height: 35px;
+    min-width: 0;
+}
+
+.settings-item > :first-child {
+    flex-shrink: 0;
+    margin-right: 1rem;
 }
 
 .settings-item:not(:last-child)::after {
@@ -56,8 +63,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #39393d;
-    transition: .4s;
+    background-color: gray;
+    transition: 0.4s;
     border-radius: 34px;
 }
 
@@ -69,23 +76,120 @@
     left: 2px;
     bottom: 2px;
     background-color: white;
-    transition: .4s;
+    transition: 0.4s;
     border-radius: 50%;
 }
 
-input:checked+.slider {
+input:checked + .slider {
     background-color: #bf7af0;
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
     transform: translateX(20px);
 }
 
-/* Inactive toggle */
-.inactive .slider {
-    background-color: #39393d;
+/* Disabled toggle */
+.disabled .slider {
+    background-color: darkgray;
 }
 
-.inactive .slider:before {
+.disabled .slider:before {
     background-color: #767676;
+}
+
+/* Number Input Styles */
+.number-input {
+    display: flex;
+    align-items: center;
+}
+
+.value-display {
+    font-size: 1.2rem;
+}
+
+.number-controls {
+    display: flex;
+    background-color: darkgray;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-left: 12px;
+}
+
+.number-btn {
+    width: 28px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: none;
+    color: black;
+    font-size: 24px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.number-btn:first-child {
+    border-right: 1px solid gray;
+}
+
+.number-btn:active {
+    background-color: #3c3c3e;
+}
+
+.number-btn.disabled {
+    color: #666;
+}
+
+.settings-drop-down {
+    appearance: none;
+    background-color: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    margin: 0;
+    margin-left: auto;
+    color: #666;
+}
+
+.settings-drop-down:focus {
+    outline: none;
+}
+
+.settings-input {
+    appearance: none;
+    background-color: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    margin: 0;
+    margin-left: auto;
+    color: #666;
+    text-align: right;
+    padding: 5px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settings-input:focus {
+    outline: 1px solid var(--primary-color);
+}
+
+.settings-button {
+    padding: 0;
+    height: 35px;
+    background-color: transparent;
+    border: none;
+    text-align: left;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--primary-color);
+    width: 100%;
+}
+
+.dangerous {
+    color: #d80000;
 }

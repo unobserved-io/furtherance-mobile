@@ -132,8 +132,8 @@ earnings-for-selection = Earnings for selection
 ### Data Settings
 sync-server = Sync Server
 server = Server
-custom = Custom
-official-server = Official Furtherance server
+custom = Custom server
+official-server = Official server
 email = Email
 encryption-key = Encryption key
 log-in = Log in

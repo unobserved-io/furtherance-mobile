@@ -105,6 +105,69 @@ pub fn retrieve_existing_shortcuts() -> Result<Vec<FurShortcut>, rusqlite::Error
     Ok(shortcuts)
 }
 
+pub fn retrieve_shortcuts_since_timestamp(
+    timestamp: i64,
+) -> Result<Vec<FurShortcut>, rusqlite::Error> {
+    let conn = Connection::open(get_directory())?;
+
+    let mut stmt =
+        conn.prepare("SELECT * FROM shortcuts WHERE last_updated >= ? ORDER BY last_updated ASC")?;
+    let mut rows = stmt.query(params![timestamp])?;
+
+    let mut shortcuts_vec: Vec<FurShortcut> = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        let fur_shortcut = FurShortcut {
+            name: row.get(1)?,
+            tags: row.get(2)?,
+            project: row.get(3)?,
+            rate: row.get(4)?,
+            currency: row.get(5)?,
+            color_hex: row.get(6)?,
+            uid: row.get(7)?,
+            is_deleted: row.get(8)?,
+            last_updated: row.get(9)?,
+        };
+        shortcuts_vec.push(fur_shortcut);
+    }
+
+    Ok(shortcuts_vec)
+}
+
+pub fn retrieve_orphaned_shortcuts(shortcut_uids: Vec<String>) -> Result<Vec<FurShortcut>> {
+    let mut conn = Connection::open(get_directory())?;
+    let mut shortcuts = Vec::new();
+
+    let tx = conn.transaction()?;
+    {
+        let mut stmt = tx.prepare("SELECT * FROM shortcuts WHERE uid = ?")?;
+
+        for uid in shortcut_uids {
+            let shortcut_iter = stmt.query_map(params![uid], |row| {
+                Ok(FurShortcut {
+                    name: row.get(1)?,
+                    tags: row.get(2)?,
+                    project: row.get(3)?,
+                    rate: row.get(4)?,
+                    currency: row.get(5)?,
+                    color_hex: row.get(6)?,
+                    uid: row.get(7)?,
+                    is_deleted: row.get(8)?,
+                    last_updated: row.get(9)?,
+                })
+            })?;
+
+            // Collect any matching tasks
+            for shortcut in shortcut_iter {
+                shortcuts.push(shortcut?);
+            }
+        }
+    }
+
+    tx.commit()?;
+    Ok(shortcuts)
+}
+
 pub fn update_shortcut(shortcut: &FurShortcut) -> Result<()> {
     let conn = Connection::open(get_directory())?;
 

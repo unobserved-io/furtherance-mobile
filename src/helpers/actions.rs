@@ -19,7 +19,7 @@ use dioxus::{hooks::use_context, signals::Readable};
 
 use crate::{state, NavTab};
 
-use super::{tasks, views::timer};
+use super::views::{task_history, timer};
 
 pub fn start_stop_pressed() {
     if state::TIMER_IS_RUNNING.cloned() {
@@ -40,7 +40,7 @@ pub fn start_stop_pressed() {
         //     self.pomodoro.sessions = 0;
         timer::stop_timer(Local::now());
 
-        tasks::update_task_history(
+        task_history::update_task_history(
             use_context::<state::FurState>()
                 .settings
                 .read()

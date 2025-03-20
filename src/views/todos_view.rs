@@ -68,7 +68,7 @@ fn TodoListItem(todo: FurTodo) -> Element {
                     onclick: move |_| {
                         todo_clone.is_completed = !todo_clone.is_completed;
                         match database::todos::update_todo(&todo_clone) {
-                            Ok(_) => helpers::todos::update_all_todos(),
+                            Ok(_) => helpers::views::todos::update_all_todos(),
                             Err(e) => eprintln!("Error updating todo: {}", e),
                         }
                     },

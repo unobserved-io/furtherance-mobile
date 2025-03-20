@@ -4,10 +4,12 @@ mod models {
     pub mod fur_task;
     pub mod fur_task_group;
     pub mod fur_todo;
+    pub mod fur_user;
 }
 pub mod database {
     pub mod init;
     pub mod shortcuts;
+    pub mod sync;
     pub mod tasks;
     pub mod todos;
 }
@@ -15,15 +17,21 @@ mod helpers {
     pub mod actions;
     pub mod color_utils;
     pub mod formatters;
-    pub mod tasks;
     pub mod view_enums;
     pub mod views {
+        pub mod settings;
         pub mod shortcuts;
+        pub mod task_history;
         pub mod task_input;
         pub mod timer;
         pub mod todos;
     }
-    pub mod todos;
+    pub mod server {
+        pub mod encryption;
+        pub mod login;
+        pub mod logout;
+        pub mod sync;
+    }
 }
 mod views {
     pub mod settings_view;

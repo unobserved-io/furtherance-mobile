@@ -14,22 +14,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use dioxus::{hooks::use_context, signals::Writable};
+use crate::{loc, localization::Localization};
 
-use crate::{database, models::fur_shortcut::FurShortcut, state};
-
-pub fn update_all_shortcuts() {
-    use_context::<state::FurState>()
-        .shortcuts
-        .set(get_all_shortcuts());
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ServerChoices {
+    Official,
+    Custom,
 }
 
-pub fn get_all_shortcuts() -> Vec<FurShortcut> {
-    match database::shortcuts::retrieve_existing_shortcuts() {
-        Ok(shortcuts) => shortcuts,
-        Err(e) => {
-            eprintln!("Error reading shortcuts from database: {}", e);
-            vec![]
-        }
+impl ServerChoices {
+    pub fn all_as_strings() -> Vec<String> {
+        vec![
+            ServerChoices::Official.to_string(),
+            ServerChoices::Custom.to_string(),
+        ]
+    }
+}
+
+impl std::fmt::Display for ServerChoices {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                ServerChoices::Official => loc!("official-server"),
+                ServerChoices::Custom => loc!("custom"),
+            }
+        )
     }
 }

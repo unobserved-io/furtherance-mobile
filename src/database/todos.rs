@@ -129,6 +129,41 @@ pub fn retrieve_todo_by_id(uid: &String) -> Result<Option<FurTodo>> {
     }
 }
 
+pub fn retrieve_orphaned_todos(todo_uids: Vec<String>) -> Result<Vec<FurTodo>> {
+    let mut conn = Connection::open(get_directory())?;
+    let mut todos = Vec::new();
+
+    let tx = conn.transaction()?;
+    {
+        let mut stmt = tx.prepare("SELECT * FROM todos WHERE uid = ?")?;
+
+        for uid in todo_uids {
+            let todo_iter = stmt.query_map(params![uid], |row| {
+                Ok(FurTodo {
+                    name: row.get(1)?,
+                    project: row.get(2)?,
+                    tags: row.get(3)?,
+                    rate: row.get(4)?,
+                    currency: row.get(5).unwrap_or(String::new()),
+                    date: row.get(6)?,
+                    uid: row.get(7)?,
+                    is_completed: row.get(8)?,
+                    is_deleted: row.get(9)?,
+                    last_updated: row.get(10)?,
+                })
+            })?;
+
+            // Collect any matching tasks
+            for todo in todo_iter {
+                todos.push(todo?);
+            }
+        }
+    }
+
+    tx.commit()?;
+    Ok(todos)
+}
+
 pub fn update_todo(todo: &FurTodo) -> Result<()> {
     let conn = Connection::open(get_directory())?;
 

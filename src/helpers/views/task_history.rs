@@ -16,7 +16,7 @@
 
 use std::collections::BTreeMap;
 
-use dioxus::{prelude::consume_context, signals::Writable};
+use dioxus::{hooks::use_context, signals::Writable};
 
 use crate::{
     database::{
@@ -74,7 +74,7 @@ fn group_tasks_by_date(tasks: Vec<FurTask>) -> BTreeMap<chrono::NaiveDate, Vec<F
 }
 
 pub fn update_task_history(days_to_show: i64) {
-    consume_context::<state::FurState>()
+    use_context::<state::FurState>()
         .tasks
         .set(get_task_history(days_to_show));
 }

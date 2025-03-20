@@ -35,11 +35,11 @@ pub struct FurSettings {
     pub notify_of_sync: bool,
     pub notify_on_idle: bool,
     pub notify_reminder: bool,
-    pub notify_reminder_interval: u16,
+    pub notify_reminder_interval: i64,
     pub pomodoro: bool,
     pub pomodoro_break_length: i64,
     pub pomodoro_extended_breaks: bool,
-    pub pomodoro_extended_break_interval: u16,
+    pub pomodoro_extended_break_interval: i64,
     pub pomodoro_extended_break_length: i64,
     pub pomodoro_length: i64,
     pub pomodoro_notification_alarm_sound: bool,
@@ -151,8 +151,15 @@ impl FurSettings {
     }
 
     pub fn change_days_to_show(&mut self, value: &i64) -> Result<(), std::io::Error> {
-        self.days_to_show = value.to_owned();
-        self.save()
+        if value >= &1 {
+            self.days_to_show = value.to_owned();
+            self.save()
+        } else {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Days to show must be at least 1 day",
+            ))
+        }
     }
 
     pub fn change_default_view(&mut self, value: &FurView) -> Result<(), std::io::Error> {
@@ -190,7 +197,7 @@ impl FurSettings {
         self.save()
     }
 
-    pub fn change_notify_reminder_interval(&mut self, value: &u16) -> Result<(), std::io::Error> {
+    pub fn change_notify_reminder_interval(&mut self, value: &i64) -> Result<(), std::io::Error> {
         self.notify_reminder_interval = value.to_owned();
         self.save()
     }
@@ -206,8 +213,15 @@ impl FurSettings {
     }
 
     pub fn change_pomodoro_break_length(&mut self, value: &i64) -> Result<(), std::io::Error> {
-        self.pomodoro_break_length = value.to_owned();
-        self.save()
+        if value >= &1 {
+            self.pomodoro_break_length = value.to_owned();
+            self.save()
+        } else {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Break length must be at least 1 minute",
+            ))
+        }
     }
 
     pub fn change_pomodoro_extended_breaks(&mut self, value: &bool) -> Result<(), std::io::Error> {
@@ -217,28 +231,56 @@ impl FurSettings {
 
     pub fn change_pomodoro_extended_break_interval(
         &mut self,
-        value: &u16,
+        value: &i64,
     ) -> Result<(), std::io::Error> {
-        self.pomodoro_extended_break_interval = value.to_owned();
-        self.save()
+        if value >= &2 {
+            self.pomodoro_extended_break_interval = value.to_owned();
+            self.save()
+        } else {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Extended break interval must be at least 2",
+            ))
+        }
     }
 
     pub fn change_pomodoro_extended_break_length(
         &mut self,
         value: &i64,
     ) -> Result<(), std::io::Error> {
-        self.pomodoro_extended_break_length = value.to_owned();
-        self.save()
+        if value >= &1 {
+            self.pomodoro_extended_break_length = value.to_owned();
+            self.save()
+        } else {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Extended break length must be at least 1 minute",
+            ))
+        }
     }
 
     pub fn change_pomodoro_length(&mut self, value: &i64) -> Result<(), std::io::Error> {
-        self.pomodoro_length = value.to_owned();
-        self.save()
+        if value >= &1 {
+            self.pomodoro_length = value.to_owned();
+            self.save()
+        } else {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Pomodoro length must be at least 1 minute",
+            ))
+        }
     }
 
     pub fn change_pomodoro_snooze_length(&mut self, value: &i64) -> Result<(), std::io::Error> {
-        self.pomodoro_snooze_length = value.to_owned();
-        self.save()
+        if value >= &1 {
+            self.pomodoro_snooze_length = value.to_owned();
+            self.save()
+        } else {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Snooze length must be at least 1 minute",
+            ))
+        }
     }
 
     pub fn change_pomodoro_notification_alarm_sound(
