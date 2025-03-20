@@ -1,17 +1,16 @@
-# Development
+# Furtherance for iOS & Android
 
-Your new bare-bones project includes minimal organization with a single `main.rs` file and a few assets.
+This project is a work-in-progress. I'm hoping it will be finished within about a month. In the meantime, please check out [Furtherance for Windows, Mac, and Linux](https://github.com/unobserved-io/Furtherance) if you haven't already.
 
-### Serving Your App
+## Support Development
 
-Run the following command in the root of your project to start developing with the default platform:
+As you can see, I put many hours into Furtherance and give it away for free. If you'd like to see more, better, faster development, please consider leaving a tip. I truly love this work and my dream is to be able to make somewhat of a living from it.
 
-```bash
-dx serve
-```
+* [PayPal](https://www.paypal.com/donate/?hosted_button_id=TLYY8YZ424VRL)
+* [GitHub](https://github.com/sponsors/rickykresslein)
+* [Patreon](https://www.patreon.com/unobserved)
+* [Ko-fi](https://ko-fi.com/unobserved)
 
-To run for a different platform, use the `--platform platform` flag. E.g.
-```bash
-dx serve --platform desktop
-```
+## More Info
 
+Furtherance for mobile is being created using the [Dioxus](https://github.com/DioxusLabs/dioxus) framework, which allows me to use the existing backend code, minimizing the extra work I need to do and also allowing me to use pure Rust for both projects, which will reduce overhead while keeping performance excellent.
