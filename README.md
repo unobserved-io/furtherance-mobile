@@ -1,6 +1,6 @@
 # Furtherance for iOS & Android
 
-This project is a work-in-progress. I'm hoping it will be finished within about a month. In the meantime, please check out [Furtherance for Windows, Mac, and Linux](https://github.com/unobserved-io/Furtherance) if you haven't already.
+This project is a work-in-progress. I'm hoping it will be finished in about a month. In the meantime, please check out [Furtherance for Windows, Mac, and Linux](https://github.com/unobserved-io/Furtherance) if you haven't already.
 
 ## Support Development
 
