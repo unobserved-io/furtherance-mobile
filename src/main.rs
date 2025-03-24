@@ -1,4 +1,6 @@
 mod models {
+    pub mod fur_alert;
+    pub mod fur_pomodoro;
     pub mod fur_settings;
     pub mod fur_shortcut;
     pub mod fur_task;
@@ -43,7 +45,7 @@ mod constants;
 mod localization;
 mod state;
 
-use constants::{FAVICON, MAIN_CSS, TIMER_CSS};
+use constants::{ALERT_CSS, FAVICON, MAIN_CSS, TIMER_CSS};
 use database::init::db_init;
 use dioxus::prelude::*;
 use dioxus_free_icons::{
@@ -74,11 +76,14 @@ fn main() {
 fn App() -> Element {
     state::use_state_provider();
     ensure_timer_running();
+    let state = use_context::<state::FurState>();
+    let alert = state.alert.read().clone();
 
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         document::Stylesheet { href: MAIN_CSS }
         document::Stylesheet { href: TIMER_CSS }
+        document::Stylesheet { href: ALERT_CSS }
 
         div { id: "page-content",
             match ACTIVE_TAB.cloned() {
@@ -98,6 +103,15 @@ fn App() -> Element {
         }
 
         BottomNav {}
+
+        if alert.is_shown {
+            AlertDialog {
+                title: alert.title,
+                message: alert.message,
+                confirm_button: alert.confirm_button,
+                cancel_button: alert.cancel_button,
+            }
+        }
     }
 }
 
@@ -151,6 +165,35 @@ fn NavItem<I: IconShape + Clone + PartialEq + 'static>(
         div { class: "{class}", onclick: move |e| onclick.call(e),
             Icon { icon, width: 25, height: 25 }
             span { class: "nav-label", "{label}" }
+        }
+    }
+}
+
+#[component]
+fn AlertDialog(
+    title: String,
+    message: String,
+    confirm_button: (String, fn()),
+    cancel_button: Option<(String, fn())>,
+) -> Element {
+    rsx! {
+        div { class: "modal-overlay",
+            div { class: "dialog-container",
+                div { class: "dialog-content",
+                    div { class: "dialog-title", "{title}" }
+                    div { class: "dialog-message", "{message}" }
+                }
+                div { class: "dialog-buttons",
+                    if let Some((button_text, button_click_event)) = cancel_button {
+                        button { class: "dialog-button cancel-button", onclick: move |_| (button_click_event)(), "{button_text}" }
+                    }
+                    button {
+                        class: "dialog-button confirm-button",
+                        onclick: move |_| (confirm_button.1)(),
+                        "{confirm_button.0}"
+                    }
+                }
+            }
         }
     }
 }

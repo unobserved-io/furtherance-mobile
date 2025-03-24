@@ -20,7 +20,7 @@ use crate::{
     constants::{OFFICIAL_SERVER, SETTINGS_CSS},
     helpers::{
         server::{login::login_button_pressed, logout::logout_button_pressed, sync::request_sync},
-        views::settings::ServerChoices,
+        views::{settings::ServerChoices, timer},
     },
     state,
 };
@@ -208,6 +208,7 @@ pub fn SettingsView() -> Element {
                         let mut settings_clone = state.settings.read().clone();
                         if let Ok(_) = settings_clone.change_pomodoro(&!pomodoro) {
                             state.settings.set(settings_clone);
+                            *state::TIMER_TEXT.write() = timer::get_timer_text(0);
                         }
                     },
                 }

@@ -1,0 +1,68 @@
+/* Modal background overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.dialog-container {
+    width: 280px;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 23px 0 rgba(0, 0, 0, 0.2);
+}
+
+.dialog-content {
+    padding: 20px;
+    text-align: center;
+}
+
+.dialog-title {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.dialog-message {
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.dialog-buttons {
+    display: flex;
+    border-top: 1px solid #d1d1d6;
+}
+
+.dialog-button {
+    flex: 1;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 500;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.cancel-button {
+    color: #007aff;
+    border-right: 1px solid #d1d1d6;
+}
+
+.confirm-button {
+    color: #007aff;
+    font-weight: 600;
+}
+
+.dialog-button:active {
+    background-color: #f2f2f7;
+}

@@ -28,6 +28,8 @@ use crate::{
         views::{shortcuts, task_history, todos},
     },
     models::{
+        fur_alert::FurAlert,
+        fur_pomodoro::FurPomodoro,
         fur_settings::FurSettings,
         fur_shortcut::FurShortcut,
         fur_task_group::FurTaskGroup,
@@ -45,28 +47,34 @@ pub static TIMER_START_TIME: GlobalSignal<DateTime<Local>> = Global::new(|| Loca
 
 #[derive(Debug, Clone, Copy)]
 pub struct FurState {
+    pub pomodoro: Signal<FurPomodoro>,
     pub settings: Signal<FurSettings>,
     pub shortcuts: Signal<Vec<FurShortcut>>,
     pub tasks: Signal<BTreeMap<NaiveDate, Vec<FurTaskGroup>>>,
     pub todos: Signal<BTreeMap<NaiveDate, Vec<FurTodo>>>,
     pub user: Signal<Option<FurUser>>,
     pub user_fields: Signal<FurUserFields>,
+    pub alert: Signal<FurAlert>,
 }
 
 pub fn use_state_provider() {
+    let pomodoro = use_signal(|| FurPomodoro::new());
     let settings = use_signal(|| FurSettings::new().expect("Failed to load settings"));
     let shortcuts = use_signal(|| shortcuts::get_all_shortcuts());
     let tasks = use_signal(|| task_history::get_task_history(365));
     let todos = use_signal(|| todos::get_all_todos());
     let user = use_signal(|| server::sync::get_user());
     let user_fields = use_signal(|| server::sync::get_user_fields());
+    let alert = use_signal(|| FurAlert::new());
 
     use_context_provider(|| FurState {
+        pomodoro,
         settings,
         shortcuts,
         tasks,
         todos,
         user,
         user_fields,
+        alert,
     });
 }
