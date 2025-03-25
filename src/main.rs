@@ -87,11 +87,9 @@ fn App() -> Element {
 
         div { id: "page-content",
             match ACTIVE_TAB.cloned() {
-                NavTab::Timer => {
-                    rsx! {
-                        TimerView {}
-                    }
-                }
+                NavTab::Timer => rsx! {
+                    TimerView {}
+                },
                 NavTab::Todos => rsx! {
                     TodosView {}
                 },

@@ -51,14 +51,11 @@ pub fn ensure_timer_running() {
                     let mut alert = state.alert.read().clone();
                     let pomodoro = state.pomodoro.read().clone();
 
-                    // TODO: Pomodoro
                     if settings.pomodoro
                         && state::TIMER_TEXT.cloned() == "0:00:00".to_string()
                         && seconds_elapsed > 2
                     {
-                        println!("Pomodoro time's up.");
-                        // TODO: Show time's up alert (Show a pop-up and play a sound? Sound will probably only play if phone is unlocked and timer is open)
-                        // Check if idle or other alert is being displayed so as not to replace it
+                        // Check if other alert is being displayed so as not to replace it
                         if !alert.is_shown {
                             if pomodoro.on_break {
                                 // TODO: Show notification
@@ -97,35 +94,8 @@ pub fn ensure_timer_running() {
                                 state.alert.set(alert);
                             }
                         }
-                        return;
+                        continue;
                     }
-
-                    // TODO: Idle detection
-                    // if self.fur_settings.notify_on_idle
-                    //     && self.displayed_alert != Some(FurAlert::PomodoroOver)
-                    // {
-                    //     let idle_time = idle::get_idle_time() as i64;
-                    //     if idle_time >= self.fur_settings.chosen_idle_time * 60
-                    //         && !self.idle.reached
-                    //     {
-                    //         // User is idle
-                    //         self.idle.reached = true;
-                    //         self.idle.start_time = Local::now()
-                    //             - TimeDelta::seconds(self.fur_settings.chosen_idle_time * 60);
-                    //     } else if idle_time < self.fur_settings.chosen_idle_time * 60
-                    //         && self.idle.reached
-                    //         && !self.idle.notified
-                    //     {
-                    //         // User is back - show idle message
-                    //         self.idle.notified = true;
-                    //         show_notification(
-                    //             NotificationType::Idle,
-                    //             &self.localization,
-                    //             self.fur_settings.pomodoro_notification_alarm_sound,
-                    //         );
-                    //         self.displayed_alert = Some(FurAlert::Idle);
-                    //     }
-                    // }
 
                     // TODO: Write autosave every minute
                     // if seconds_elapsed > 1 && seconds_elapsed % 60 == 0 {
@@ -176,7 +146,6 @@ pub fn start_timer() {
 fn reset_timer() {
     *state::TASK_INPUT.write() = String::new();
     *state::TIMER_TEXT.write() = get_timer_text(0);
-    // TODO: state.idle = FurIdle::new();
 }
 
 pub fn get_timer_text(seconds_elapsed: i64) -> String {
@@ -317,9 +286,9 @@ fn stop_after_break() {
     *state::TIMER_IS_RUNNING.write() = false;
     pomodoro.on_break = false;
     pomodoro.snoozed = false;
-    reset_timer();
     pomodoro.sessions = 0;
     state.pomodoro.set(pomodoro);
+    reset_timer();
     alert.is_shown = false;
     state.alert.set(alert);
     update_task_history(settings.days_to_show);
