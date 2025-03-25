@@ -223,7 +223,7 @@ fn get_running_timer_text(seconds_elapsed: i64) -> String {
     }
 }
 
-fn get_stopped_timer_text() -> String {
+pub fn get_stopped_timer_text() -> String {
     let state = use_context::<state::FurState>();
     let settings = state.settings.read().clone();
     let pomodoro = state.pomodoro.read().clone();

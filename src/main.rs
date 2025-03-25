@@ -87,9 +87,11 @@ fn App() -> Element {
 
         div { id: "page-content",
             match ACTIVE_TAB.cloned() {
-                NavTab::Timer => rsx! {
-                    TimerView {}
-                },
+                NavTab::Timer => {
+                    rsx! {
+                        TimerView {}
+                    }
+                }
                 NavTab::Todos => rsx! {
                     TodosView {}
                 },
@@ -185,7 +187,11 @@ fn AlertDialog(
                 }
                 div { class: "dialog-buttons",
                     if let Some((button_text, button_click_event)) = cancel_button {
-                        button { class: "dialog-button cancel-button", onclick: move |_| (button_click_event)(), "{button_text}" }
+                        button {
+                            class: "dialog-button cancel-button",
+                            onclick: move |_| (button_click_event)(),
+                            "{button_text}"
+                        }
                     }
                     button {
                         class: "dialog-button confirm-button",

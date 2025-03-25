@@ -21,7 +21,10 @@ use dioxus_free_icons::{
     Icon,
 };
 
-use crate::helpers::{actions, formatters, views::task_input::validate_task_input};
+use crate::helpers::{
+    actions, formatters,
+    views::{task_input::validate_task_input, timer::get_stopped_timer_text},
+};
 use crate::loc;
 use crate::localization::Localization;
 use crate::models::fur_task_group::FurTaskGroup;
@@ -29,6 +32,13 @@ use crate::state;
 
 #[component]
 pub fn TimerView() -> Element {
+    // Show pomodoro starting time if timer is not running
+    // Must be async to prevent possible infinite loop
+    spawn(async {
+        if !state::TIMER_IS_RUNNING.cloned() {
+            *state::TIMER_TEXT.write() = get_stopped_timer_text();
+        }
+    });
     rsx! {
         Timer {}
         TaskInput {}
