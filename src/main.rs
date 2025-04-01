@@ -2,6 +2,7 @@ mod models {
     pub mod fur_alert;
     pub mod fur_pomodoro;
     pub mod fur_settings;
+    pub mod fur_sheet;
     pub mod fur_shortcut;
     pub mod fur_task;
     pub mod fur_task_group;
@@ -78,6 +79,7 @@ fn App() -> Element {
     ensure_timer_running();
     let state = use_context::<state::FurState>();
     let alert = state.alert.read().clone();
+    let sheets = state.sheets.read().clone();
 
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
@@ -102,7 +104,9 @@ fn App() -> Element {
             }
         }
 
-        BottomNav {}
+        if !sheets.new_task_is_shown {
+            BottomNav {}
+        }
 
         if alert.is_shown {
             AlertDialog {
