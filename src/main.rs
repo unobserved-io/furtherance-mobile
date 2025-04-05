@@ -104,7 +104,7 @@ fn App() -> Element {
             }
         }
 
-        if !sheets.new_task_is_shown {
+        if !sheets.new_task_is_shown && !sheets.new_shortcut_is_shown {
             BottomNav {}
         }
 

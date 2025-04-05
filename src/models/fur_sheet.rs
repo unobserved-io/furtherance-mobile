@@ -17,12 +17,14 @@
 #[derive(Clone, Debug)]
 pub struct FurSheet {
     pub new_task_is_shown: bool,
+    pub new_shortcut_is_shown: bool,
 }
 
 impl FurSheet {
     pub fn new() -> Self {
         FurSheet {
             new_task_is_shown: false,
+            new_shortcut_is_shown: false,
         }
     }
 }

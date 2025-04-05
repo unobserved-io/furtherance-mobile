@@ -15,3 +15,7 @@
     margin: 0.2rem 0;
     line-height: 1.2;
 }
+
+#add-new-shortcut {
+    float: right;
+}
