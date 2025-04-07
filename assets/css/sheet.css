@@ -69,6 +69,14 @@
     margin-top: 1rem;
 }
 
+.sheet-todo-date {
+    width: 100%;
+    height: 2.5rem;
+    font-size: 1rem;
+    padding: 10px 15px;
+    margin-top: 1rem;
+}
+
 .sheet-label {
     margin-right: 1rem;
 }

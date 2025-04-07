@@ -52,6 +52,9 @@ repeat = Repeat
 new-shortcut = New Shortcut
 create-shortcut = Create shortcut
 
+## Todos
+new-todo = New Todo
+
 ## Reports
 charts = Charts
 list = List

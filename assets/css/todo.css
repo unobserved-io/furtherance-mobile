@@ -1,3 +1,7 @@
+#todo-list {
+    margin-top: 45px;
+}
+
 #todo-title-row {
     margin-top: 15px;
     margin-bottom: 5px;
@@ -42,4 +46,9 @@
 .todo-start {
     margin-left: auto;
     text-align: right;
+}
+
+#add-new-todo {
+    float: right;
+    margin-bottom: 1rem;
 }

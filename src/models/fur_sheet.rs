@@ -18,6 +18,7 @@
 pub struct FurSheet {
     pub new_task_is_shown: bool,
     pub new_shortcut_is_shown: bool,
+    pub new_todo_is_shown: bool,
 }
 
 impl FurSheet {
@@ -25,6 +26,7 @@ impl FurSheet {
         FurSheet {
             new_task_is_shown: false,
             new_shortcut_is_shown: false,
+            new_todo_is_shown: false,
         }
     }
 }
