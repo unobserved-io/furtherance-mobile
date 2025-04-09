@@ -14,17 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::collections::HashMap;
+
 use chrono::{
     offset::LocalResult, DateTime, Duration, Local, MappedLocalTime, NaiveDate, NaiveDateTime,
     TimeZone,
 };
 use dioxus::prelude::*;
 use dioxus_free_icons::{
-    icons::bs_icons::{BsPlayFill, BsPlus, BsStopFill},
+    icons::bs_icons::{BsPlayFill, BsPlus, BsStopFill, BsX},
     Icon,
 };
+use fluent::FluentValue;
 
-use crate::models::fur_task_group::FurTaskGroup;
 use crate::state;
 use crate::{
     constants::SHEET_CSS,
@@ -34,6 +36,9 @@ use crate::{
     },
 };
 use crate::{database, loc, models::fur_task::FurTask};
+use crate::{
+    helpers::formatters::seconds_to_formatted_duration, models::fur_task_group::FurTaskGroup,
+};
 use crate::{helpers::views::task_history, localization::Localization};
 
 static TIME_FORMAT: &str = "%Y-%m-%dT%H:%M";
@@ -58,8 +63,13 @@ pub fn TimerView() -> Element {
         TaskInput {}
         TaskHistory {}
 
-        div { class: if sheets.new_task_is_shown { "overlay visible" } else { "overlay" }, "" }
+        div { class: if sheets.new_task_is_shown || sheets.group_details_sheet.is_some() { "overlay visible" } else { "overlay" },
+            ""
+        }
         div { class: if sheets.new_task_is_shown { "sheet visible" } else { "sheet" }, NewTaskSheet {} }
+        div { class: if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none() { "sheet visible" } else { "sheet" },
+            GroupDetailsSheet { task_group: sheets.group_details_sheet.clone() }
+        }
     }
 }
 
@@ -151,13 +161,7 @@ pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Eleme
             )
         },
     );
-    let total_time_str = formatters::seconds_to_formatted_duration(
-        total_time,
-        use_context::<state::FurState>()
-            .settings
-            .read()
-            .show_seconds,
-    );
+    let total_time_str = formatters::seconds_to_formatted_duration(total_time);
     let formatted_date = formatters::format_title_date(&date);
     let total_earnings_str = format!("${:.2}", total_earnings);
 
@@ -181,18 +185,19 @@ pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Eleme
 #[component]
 pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
     let number_of_tasks = task_group.tasks.len();
-    let total_time_str = formatters::seconds_to_formatted_duration(
-        task_group.total_time,
-        use_context::<state::FurState>()
-            .settings
-            .read()
-            .show_seconds,
-    );
+    let total_time_str = formatters::seconds_to_formatted_duration(task_group.total_time);
     let total_earnings = task_group.rate * (task_group.total_time as f32 / 3600.0);
     let total_earnings_str = format!("${:.2}", total_earnings);
 
     rsx! {
-        div { class: "task-bubble",
+        div {
+            class: "task-bubble",
+            onclick: move |_| {
+                let mut new_sheet = use_context::<state::FurState>().sheets.cloned();
+                new_sheet.group_details_sheet = Some(task_group.clone());
+                use_context::<state::FurState>().sheets.set(new_sheet);
+            },
+
             if number_of_tasks > 1 {
                 div { class: "circle-number", "{number_of_tasks}" }
             }
@@ -356,9 +361,100 @@ fn NewTaskSheet() -> Element {
     }
 }
 
+#[component]
+fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
+    let mut task_input = use_signal(|| String::new());
+    let one_hour_ago = Local::now() - Duration::hours(1);
+    let mut start_time = use_signal(|| one_hour_ago.format(TIME_FORMAT).to_string());
+    let mut stop_time = use_signal(|| Local::now().format(TIME_FORMAT).to_string());
+    let rate_string = if let Some(group) = &task_group {
+        format!("${:.2}", group.rate)
+    } else {
+        "$0.00".to_string()
+    };
+    let save_text = loc!("save");
+    let cancel_text = loc!("cancel");
+    let start_colon = loc!("start-colon");
+    let stop_colon = loc!("stop-colon");
+
+    rsx! {
+        if let Some(group) = task_group {
+            div { class: "sheet-contents",
+
+                div { id: "group-buttons-row",
+                    p {}
+                    button {
+                        class: "close-sheet-button",
+                        onclick: move |_| {
+                            let mut state = use_context::<state::FurState>();
+                            let mut new_sheets = state.sheets.read().clone();
+                            new_sheets.group_details_sheet = None;
+                            state.sheets.set(new_sheets);
+                        },
+                        Icon { icon: BsX, width: 40, height: 40 }
+                    }
+                }
+
+                h2 { "{group.name}" }
+                if !group.project.is_empty() {
+                    p { "@{group.project}" }
+                }
+                if !group.tags.is_empty() {
+                    p { "#{group.tags}" }
+                }
+                if group.rate > 0.0 {
+                    p { "{rate_string}" }
+                }
+
+                for task in group.tasks {
+                    div {
+                        class: "edit-task-bubble",
+                        onclick: move |_| {
+                            let mut new_sheet = use_context::<state::FurState>().sheets.cloned();
+                            new_sheet.task_edit_sheet = Some(task.clone());
+                            use_context::<state::FurState>().sheets.set(new_sheet);
+                        },
+
+                        p { class: "bold", "{get_start_to_stop_string(&task)}" }
+                        p { "{get_total_task_time_string(&task)}" }
+                    }
+                }
+            }
+        } else {
+            div {}
+        }
+    }
+}
+
 fn parse_datetime_from_str(datetime_str: &str) -> MappedLocalTime<DateTime<Local>> {
     match NaiveDateTime::parse_from_str(datetime_str, TIME_FORMAT) {
         Ok(naive) => Local.from_local_datetime(&naive),
         Err(_) => LocalResult::None,
     }
+}
+
+fn get_start_to_stop_string(task: &FurTask) -> String {
+    loc!(
+        "start-to-stop",
+        &HashMap::from([
+            (
+                "start",
+                FluentValue::from(task.start_time.format("%H:%M").to_string())
+            ),
+            (
+                "stop",
+                FluentValue::from(task.stop_time.format("%H:%M").to_string())
+            )
+        ])
+    )
+}
+
+fn get_total_task_time_string(task: &FurTask) -> String {
+    loc!(
+        "total-time-dynamic",
+        &HashMap::from([(
+            "time",
+            FluentValue::from(seconds_to_formatted_duration(task.total_time_in_seconds()))
+        )])
+    )
 }

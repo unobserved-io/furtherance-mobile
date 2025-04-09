@@ -111,3 +111,28 @@
 .color-selector {
     margin: 0.4rem;
 }
+
+#group-buttons-row .close-sheet-button {
+    float: right;
+    background-color: transparent;
+    color: gray;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+#group-buttons-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.edit-task-bubble {
+    align-items: center;
+    padding: 0 1rem;
+    text-align: left;
+    margin-bottom: 10px;
+    border: 1px gray solid;
+    border-radius: 1rem;
+    line-height: 0.8;
+}
