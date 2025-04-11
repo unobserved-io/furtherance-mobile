@@ -47,6 +47,7 @@ task-count = {$count ->
 total-time-dynamic = Total: {$time}
 total-earnings = ${$amount}
 repeat = Repeat
+edit-task = Edit Task
 
 ## Shortcuts
 new-shortcut = New Shortcut

@@ -68,7 +68,14 @@ pub fn TimerView() -> Element {
         }
         div { class: if sheets.new_task_is_shown { "sheet visible" } else { "sheet" }, NewTaskSheet {} }
         div { class: if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none() { "sheet visible" } else { "sheet" },
-            GroupDetailsSheet { task_group: sheets.group_details_sheet.clone() }
+            if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none() {
+                GroupDetailsSheet { task_group: sheets.group_details_sheet.clone() }
+            }
+        }
+        div { class: if sheets.task_edit_sheet.is_some() { "sheet visible" } else { "sheet" },
+            if sheets.task_edit_sheet.is_some() {
+                TaskEditSheet { task: sheets.task_edit_sheet.clone() }
+            }
         }
     }
 }
@@ -363,20 +370,6 @@ fn NewTaskSheet() -> Element {
 
 #[component]
 fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
-    let mut task_input = use_signal(|| String::new());
-    let one_hour_ago = Local::now() - Duration::hours(1);
-    let mut start_time = use_signal(|| one_hour_ago.format(TIME_FORMAT).to_string());
-    let mut stop_time = use_signal(|| Local::now().format(TIME_FORMAT).to_string());
-    let rate_string = if let Some(group) = &task_group {
-        format!("${:.2}", group.rate)
-    } else {
-        "$0.00".to_string()
-    };
-    let save_text = loc!("save");
-    let cancel_text = loc!("cancel");
-    let start_colon = loc!("start-colon");
-    let stop_colon = loc!("stop-colon");
-
     rsx! {
         if let Some(group) = task_group {
             div { class: "sheet-contents",
@@ -403,7 +396,7 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                     p { "#{group.tags}" }
                 }
                 if group.rate > 0.0 {
-                    p { "{rate_string}" }
+                    p { {format!("${:.2}", group.rate)} }
                 }
 
                 for task in group.tasks {
@@ -423,6 +416,144 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
         } else {
             div {}
         }
+    }
+}
+
+#[component]
+fn TaskEditSheet(task: Option<FurTask>) -> Element {
+    if let Some(task) = task {
+        let mut task_input = use_signal(|| task.to_string());
+        let mut start_time = use_signal(|| task.start_time.format(TIME_FORMAT).to_string());
+        let mut stop_time = use_signal(|| task.stop_time.format(TIME_FORMAT).to_string());
+
+        let task_uid = task.uid.clone();
+        let task_currency = task.currency.clone();
+
+        rsx! {
+            div { class: "sheet-contents",
+                h2 { {loc!("edit-task")} }
+                input {
+                    class: "sheet-task-input",
+                    value: "{task_input}",
+                    oninput: move |event| {
+                        let new_value = validate_task_input(event.value());
+                        task_input.set(new_value);
+                    },
+                    placeholder: task.to_string(),
+                }
+
+                // TODO: Test min/max on device (may work on device but not in simulator)
+                br {}
+                label { class: "sheet-label", {loc!("start-colon")} }
+                input {
+                    class: "sheet-task-datetime",
+                    r#type: "datetime-local",
+                    oninput: move |event| {
+                        if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                            &event.value(),
+                        ) {
+                            if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                                &stop_time.cloned(),
+                            ) {
+                                if parsed_start_time < parsed_stop_time {
+                                    start_time.set(event.value())
+                                } else {
+                                    start_time.set(start_time.cloned());
+                                }
+                            }
+                        }
+                    },
+                    value: "{start_time}",
+                    max: "{stop_time}", // Seems unsupported by iOS
+                }
+                br {}
+                label { class: "sheet-label", {loc!("stop-colon")} }
+                input {
+                    class: "sheet-task-datetime",
+                    r#type: "datetime-local",
+                    oninput: move |event| {
+                        if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                            &event.value(),
+                        ) {
+                            if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                                &stop_time.cloned(),
+                            ) {
+                                if parsed_start_time > parsed_stop_time {
+                                    stop_time.set(event.value())
+                                } else {
+                                    stop_time.set(stop_time.cloned());
+                                }
+                            }
+                        }
+                    },
+                    value: "{stop_time}",
+                    min: "{start_time}", // Seems unsupported by iOS
+                }
+                br {}
+
+                button {
+                    class: "sheet-cancel-button",
+                    onclick: move |_| {
+                        let mut state = use_context::<state::FurState>();
+                        let mut new_sheets = state.sheets.read().clone();
+                        new_sheets.task_edit_sheet = None;
+                        state.sheets.set(new_sheets);
+                    },
+                    {loc!("cancel")}
+                }
+                button {
+                    class: "sheet-primary-button",
+                    onclick: move |event| {
+                        if task_input.read().trim().is_empty() {
+                            event.prevent_default();
+                        } else {
+                            if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                                &start_time.cloned(),
+                            ) {
+                                if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                                    &stop_time.cloned(),
+                                ) {
+                                    let (name, project, tags, rate) = formatters::split_task_input(
+                                        &task_input.cloned(),
+                                    );
+                                    if name != task.name || project != task.project || tags != task.tags
+                                        || rate != task.rate || parsed_start_time != task.start_time
+                                        || parsed_stop_time != task.stop_time
+                                    {
+                                        database::tasks::update_task(
+                                                &FurTask {
+                                                    name,
+                                                    start_time: parsed_start_time,
+                                                    stop_time: parsed_stop_time,
+                                                    tags,
+                                                    project,
+                                                    rate,
+                                                    currency: task_currency.clone(),
+                                                    uid: task_uid.clone(),
+                                                    is_deleted: task.is_deleted,
+                                                    last_updated: task.last_updated,
+                                                },
+                                            )
+                                            .expect("Couldn't update task in database.");
+                                    }
+                                    let mut state = use_context::<state::FurState>();
+                                    let mut new_sheets = state.sheets.read().clone();
+                                    new_sheets.group_details_sheet = None;
+                                    new_sheets.task_edit_sheet = None;
+                                    state.sheets.set(new_sheets);
+                                    task_history::update_task_history(
+                                        use_context::<state::FurState>().settings.read().days_to_show,
+                                    );
+                                }
+                            }
+                        }
+                    },
+                    {loc!("save")}
+                }
+            }
+        }
+    } else {
+        rsx! {}
     }
 }
 
