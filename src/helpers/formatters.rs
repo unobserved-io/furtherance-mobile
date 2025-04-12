@@ -46,9 +46,9 @@ pub fn format_title_date(date: &NaiveDate) -> String {
     } else if date == &tomorrow {
         loc!("tomorrow")
     } else if date.year() == current_year {
-        date.format("%b %d").to_string()
+        date.format("%b %e").to_string()
     } else {
-        date.format("%b %d, %Y").to_string()
+        date.format("%b %e, %Y").to_string()
     }
 }
 
