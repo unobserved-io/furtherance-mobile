@@ -16,7 +16,7 @@
 
 use rusqlite::{params, Connection, Result};
 
-use crate::models::fur_task::FurTask;
+use crate::models::{fur_task::FurTask, fur_task_group::FurTaskGroup};
 
 use super::init::get_directory;
 
@@ -442,6 +442,39 @@ pub fn delete_tasks_by_ids(id_list: &[String]) -> Result<()> {
             params![now, id],
         )?;
     }
+
+    Ok(())
+}
+
+pub fn update_group_of_tasks(group: &FurTaskGroup) -> Result<()> {
+    let mut conn = Connection::open(get_directory())?;
+    let tx = conn.transaction()?;
+
+    {
+        let mut stmt = tx.prepare(
+            "UPDATE tasks SET
+            task_name = ?1,
+            tags = ?2,
+            project = ?3,
+            rate = ?4,
+            last_updated = ?5
+        WHERE uid = ?6",
+        )?;
+
+        for uid in group.all_task_ids().iter() {
+            stmt.execute(params![
+                group.name,
+                group.tags,
+                group.project,
+                group.rate,
+                chrono::Utc::now().timestamp(),
+                uid,
+            ])?;
+        }
+    }
+
+    // Commit the transaction
+    tx.commit()?;
 
     Ok(())
 }

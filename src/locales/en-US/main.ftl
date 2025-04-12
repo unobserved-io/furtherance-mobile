@@ -49,6 +49,7 @@ total-earnings = ${$amount}
 repeat = Repeat
 edit-task = Edit Task
 add-to-group = Add to Group
+edit-group = Edit Group
 
 ## Shortcuts
 new-shortcut = New Shortcut

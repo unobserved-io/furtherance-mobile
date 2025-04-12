@@ -22,7 +22,7 @@ use chrono::{
 };
 use dioxus::prelude::*;
 use dioxus_free_icons::{
-    icons::bs_icons::{BsPlayFill, BsPlus, BsStopFill, BsX},
+    icons::bs_icons::{BsPencil, BsPlayFill, BsPlus, BsStopFill, BsX},
     Icon,
 };
 use fluent::FluentValue;
@@ -69,9 +69,9 @@ pub fn TimerView() -> Element {
         }
         div { class: if sheets.new_task_is_shown { "sheet visible" } else { "sheet" }, NewTaskSheet {} }
         div { class: if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none()
-    && sheets.add_to_group_sheet.is_none() { "sheet visible" } else { "sheet" },
+    && sheets.add_to_group_sheet.is_none() && sheets.edit_group_sheet.is_none() { "sheet visible" } else { "sheet" },
             if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none()
-                && sheets.add_to_group_sheet.is_none()
+                && sheets.add_to_group_sheet.is_none() && sheets.edit_group_sheet.is_none()
             {
                 GroupDetailsSheet { task_group: sheets.group_details_sheet.clone() }
             }
@@ -84,6 +84,11 @@ pub fn TimerView() -> Element {
         div { class: if sheets.add_to_group_sheet.is_some() { "sheet visible" } else { "sheet" },
             if sheets.add_to_group_sheet.is_some() {
                 AddToGroupSheet { group: sheets.add_to_group_sheet.clone() }
+            }
+        }
+        div { class: if sheets.edit_group_sheet.is_some() { "sheet visible" } else { "sheet" },
+            if sheets.edit_group_sheet.is_some() {
+                EditGroupSheet { group: sheets.edit_group_sheet.clone() }
             }
         }
     }
@@ -380,6 +385,7 @@ fn NewTaskSheet() -> Element {
 #[component]
 fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
     let task_group_clone = task_group.clone();
+    let task_group_clone_two = task_group.clone();
     rsx! {
         if let Some(group) = task_group {
             div { class: "sheet-contents",
@@ -395,6 +401,17 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                 state.sheets.set(new_sheets);
                             },
                             Icon { icon: BsPlus, width: 40, height: 40 }
+                        }
+
+                        button {
+                            class: "no-bg-button",
+                            onclick: move |_| {
+                                let mut state = use_context::<state::FurState>();
+                                let mut new_sheets = state.sheets.read().clone();
+                                new_sheets.edit_group_sheet = task_group_clone_two.clone();
+                                state.sheets.set(new_sheets);
+                            },
+                            Icon { icon: BsPencil, width: 25, height: 25 }
                         }
                     }
                     button {
@@ -604,7 +621,7 @@ fn AddToGroupSheet(group: Option<FurTaskGroup>) -> Element {
 
                 // TODO: Test min/max on device (may work on device but not in simulator)
                 br {}
-                label { class: "sheet-label", {loc!("start-colon") + " " + {&date_string}} }
+                label { class: "sheet-label", {loc!("start-colon") + " " + { &date_string }} }
                 input {
                     class: "sheet-task-datetime",
                     r#type: "time",
@@ -627,7 +644,7 @@ fn AddToGroupSheet(group: Option<FurTaskGroup>) -> Element {
                     max: "{stop_time}", // Seems unsupported by iOS
                 }
                 br {}
-                label { class: "sheet-label", {loc!("stop-colon") + " " + {&date_string}} }
+                label { class: "sheet-label", {loc!("stop-colon") + " " + { &date_string }} }
                 input {
                     class: "sheet-task-datetime",
                     r#type: "time",
@@ -668,7 +685,7 @@ fn AddToGroupSheet(group: Option<FurTaskGroup>) -> Element {
                             &(month_day_year_t.cloned() + &start_time.cloned()),
                         ) {
                             if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
-                                &(month_day_year_t.cloned() + &stop_time.cloned())
+                                &(month_day_year_t.cloned() + &stop_time.cloned()),
                             ) {
                                 let (name, project, tags, rate) = formatters::split_task_input(
                                     &group.to_string(),
@@ -696,6 +713,68 @@ fn AddToGroupSheet(group: Option<FurTaskGroup>) -> Element {
                                 );
                             }
                         }
+                    },
+                    {loc!("save")}
+                }
+            }
+        }
+    } else {
+        rsx! {}
+    }
+}
+
+#[component]
+fn EditGroupSheet(group: Option<FurTaskGroup>) -> Element {
+    if let Some(group) = group {
+        let group_clone = group.clone();
+        let mut group_input = use_signal(|| group.to_string());
+
+        rsx! {
+            div { class: "sheet-contents",
+                h2 { {loc!("edit-group")} }
+                input {
+                    class: "sheet-task-input",
+                    value: "{group_input}",
+                    oninput: move |event| {
+                        let new_value = validate_task_input(event.value());
+                        group_input.set(new_value);
+                    },
+                    placeholder: group.to_string(),
+                }
+                br {}
+
+                button {
+                    class: "sheet-cancel-button",
+                    onclick: move |_| {
+                        let mut state = use_context::<state::FurState>();
+                        let mut new_sheets = state.sheets.read().clone();
+                        new_sheets.edit_group_sheet = None;
+                        state.sheets.set(new_sheets);
+                    },
+                    {loc!("cancel")}
+                }
+                button {
+                    class: "sheet-primary-button",
+                    onclick: move |_| {
+                        let (name, project, tags, rate) = formatters::split_task_input(
+                            &group_input.cloned(),
+                        );
+                        let mut new_group = group_clone.clone();
+                        new_group.name = name;
+                        new_group.project = project;
+                        new_group.tags = tags;
+                        new_group.rate = rate;
+                        if let Err(e) = database::tasks::update_group_of_tasks(&new_group) {
+                            eprintln!("Error updating task group in database: {}", e);
+                        }
+                        let mut state = use_context::<state::FurState>();
+                        let mut new_sheets = state.sheets.read().clone();
+                        new_sheets.group_details_sheet = None;
+                        new_sheets.edit_group_sheet = None;
+                        state.sheets.set(new_sheets);
+                        task_history::update_task_history(
+                            use_context::<state::FurState>().settings.read().days_to_show,
+                        );
                     },
                     {loc!("save")}
                 }

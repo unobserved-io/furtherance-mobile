@@ -24,6 +24,7 @@ pub struct FurSheet {
     pub group_details_sheet: Option<FurTaskGroup>,
     pub task_edit_sheet: Option<FurTask>,
     pub add_to_group_sheet: Option<FurTaskGroup>,
+    pub edit_group_sheet: Option<FurTaskGroup>,
 }
 
 impl FurSheet {
@@ -35,6 +36,7 @@ impl FurSheet {
             group_details_sheet: None,
             task_edit_sheet: None,
             add_to_group_sheet: None,
+            edit_group_sheet: None,
         }
     }
 }
