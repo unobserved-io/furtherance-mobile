@@ -48,6 +48,7 @@ total-time-dynamic = Total: {$time}
 total-earnings = ${$amount}
 repeat = Repeat
 edit-task = Edit Task
+add-to-group = Add to Group
 
 ## Shortcuts
 new-shortcut = New Shortcut

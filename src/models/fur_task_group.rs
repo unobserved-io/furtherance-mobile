@@ -16,8 +16,6 @@
 
 use crate::models::fur_task::FurTask;
 
-use std::fmt;
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct FurTaskGroup {
     pub uid: String,
@@ -64,22 +62,20 @@ impl FurTaskGroup {
     }
 }
 
-impl fmt::Display for FurTaskGroup {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.name)?;
+impl ToString for FurTaskGroup {
+    fn to_string(&self) -> String {
+        let mut task_string: String = self.name.to_string();
 
         if !self.project.is_empty() {
-            write!(f, " @{}", self.project)?;
+            task_string += &format!(" @{}", self.project);
         }
-
         if !self.tags.is_empty() {
-            write!(f, " #{}", self.tags)?;
+            task_string += &format!(" #{}", self.tags);
         }
-
         if self.rate != 0.0 {
-            write!(f, " ${:.2}", self.rate)?;
+            task_string += &format!(" ${:.2}", self.rate);
         }
 
-        Ok(())
+        task_string
     }
 }

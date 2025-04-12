@@ -23,6 +23,7 @@ pub struct FurSheet {
     pub new_todo_is_shown: bool,
     pub group_details_sheet: Option<FurTaskGroup>,
     pub task_edit_sheet: Option<FurTask>,
+    pub add_to_group_sheet: Option<FurTaskGroup>,
 }
 
 impl FurSheet {
@@ -33,6 +34,7 @@ impl FurSheet {
             new_todo_is_shown: false,
             group_details_sheet: None,
             task_edit_sheet: None,
+            add_to_group_sheet: None,
         }
     }
 }

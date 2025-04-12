@@ -41,7 +41,8 @@ use crate::{
 };
 use crate::{helpers::views::task_history, localization::Localization};
 
-static TIME_FORMAT: &str = "%Y-%m-%dT%H:%M";
+static DATE_TIME_FORMAT: &str = "%Y-%m-%dT%H:%M";
+static TIME_FORMAT: &str = "%H:%M";
 
 #[component]
 pub fn TimerView() -> Element {
@@ -67,14 +68,22 @@ pub fn TimerView() -> Element {
             ""
         }
         div { class: if sheets.new_task_is_shown { "sheet visible" } else { "sheet" }, NewTaskSheet {} }
-        div { class: if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none() { "sheet visible" } else { "sheet" },
-            if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none() {
+        div { class: if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none()
+    && sheets.add_to_group_sheet.is_none() { "sheet visible" } else { "sheet" },
+            if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none()
+                && sheets.add_to_group_sheet.is_none()
+            {
                 GroupDetailsSheet { task_group: sheets.group_details_sheet.clone() }
             }
         }
         div { class: if sheets.task_edit_sheet.is_some() { "sheet visible" } else { "sheet" },
             if sheets.task_edit_sheet.is_some() {
                 TaskEditSheet { task: sheets.task_edit_sheet.clone() }
+            }
+        }
+        div { class: if sheets.add_to_group_sheet.is_some() { "sheet visible" } else { "sheet" },
+            if sheets.add_to_group_sheet.is_some() {
+                AddToGroupSheet { group: sheets.add_to_group_sheet.clone() }
             }
         }
     }
@@ -239,8 +248,8 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
 fn NewTaskSheet() -> Element {
     let mut task_input = use_signal(|| String::new());
     let one_hour_ago = Local::now() - Duration::hours(1);
-    let mut start_time = use_signal(|| one_hour_ago.format(TIME_FORMAT).to_string());
-    let mut stop_time = use_signal(|| Local::now().format(TIME_FORMAT).to_string());
+    let mut start_time = use_signal(|| one_hour_ago.format(DATE_TIME_FORMAT).to_string());
+    let mut stop_time = use_signal(|| Local::now().format(DATE_TIME_FORMAT).to_string());
     let save_text = loc!("save");
     let cancel_text = loc!("cancel");
     let start_colon = loc!("start-colon");
@@ -289,10 +298,10 @@ fn NewTaskSheet() -> Element {
                 class: "sheet-task-datetime",
                 r#type: "datetime-local",
                 oninput: move |event| {
-                    if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                    if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
                         &event.value(),
                     ) {
-                        if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                        if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
                             &stop_time.cloned(),
                         ) {
                             if parsed_start_time > parsed_stop_time {
@@ -312,8 +321,8 @@ fn NewTaskSheet() -> Element {
                 class: "sheet-cancel-button",
                 onclick: move |_| {
                     task_input.set(String::new());
-                    start_time.set(one_hour_ago.format(TIME_FORMAT).to_string());
-                    stop_time.set(Local::now().format(TIME_FORMAT).to_string());
+                    start_time.set(one_hour_ago.format(DATE_TIME_FORMAT).to_string());
+                    stop_time.set(Local::now().format(DATE_TIME_FORMAT).to_string());
                     let mut state = use_context::<state::FurState>();
                     let mut new_sheets = state.sheets.read().clone();
                     new_sheets.new_task_is_shown = false;
@@ -349,8 +358,8 @@ fn NewTaskSheet() -> Element {
                                     )
                                     .expect("Couldn't write task to database.");
                                 task_input.set(String::new());
-                                start_time.set(one_hour_ago.format(TIME_FORMAT).to_string());
-                                stop_time.set(Local::now().format(TIME_FORMAT).to_string());
+                                start_time.set(one_hour_ago.format(DATE_TIME_FORMAT).to_string());
+                                stop_time.set(Local::now().format(DATE_TIME_FORMAT).to_string());
                                 let mut state = use_context::<state::FurState>();
                                 let mut new_sheets = state.sheets.read().clone();
                                 new_sheets.new_task_is_shown = false;
@@ -370,12 +379,24 @@ fn NewTaskSheet() -> Element {
 
 #[component]
 fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
+    let task_group_clone = task_group.clone();
     rsx! {
         if let Some(group) = task_group {
             div { class: "sheet-contents",
 
                 div { id: "group-buttons-row",
-                    p {}
+                    div {
+                        button {
+                            class: "close-sheet-button",
+                            onclick: move |_| {
+                                let mut state = use_context::<state::FurState>();
+                                let mut new_sheets = state.sheets.read().clone();
+                                new_sheets.add_to_group_sheet = task_group_clone.clone();
+                                state.sheets.set(new_sheets);
+                            },
+                            Icon { icon: BsPlus, width: 40, height: 40 }
+                        }
+                    }
                     button {
                         class: "close-sheet-button",
                         onclick: move |_| {
@@ -423,8 +444,8 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
 fn TaskEditSheet(task: Option<FurTask>) -> Element {
     if let Some(task) = task {
         let mut task_input = use_signal(|| task.to_string());
-        let mut start_time = use_signal(|| task.start_time.format(TIME_FORMAT).to_string());
-        let mut stop_time = use_signal(|| task.stop_time.format(TIME_FORMAT).to_string());
+        let mut start_time = use_signal(|| task.start_time.format(DATE_TIME_FORMAT).to_string());
+        let mut stop_time = use_signal(|| task.stop_time.format(DATE_TIME_FORMAT).to_string());
 
         let task_uid = task.uid.clone();
         let task_currency = task.currency.clone();
@@ -472,10 +493,10 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                     class: "sheet-task-datetime",
                     r#type: "datetime-local",
                     oninput: move |event| {
-                        if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                        if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
                             &event.value(),
                         ) {
-                            if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                            if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
                                 &stop_time.cloned(),
                             ) {
                                 if parsed_start_time > parsed_stop_time {
@@ -557,8 +578,136 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
     }
 }
 
+#[component]
+fn AddToGroupSheet(group: Option<FurTaskGroup>) -> Element {
+    if let Some(group) = group {
+        let one_hour_ago = Local::now() - Duration::hours(1);
+        let mut start_time = use_signal(|| one_hour_ago.format(TIME_FORMAT).to_string());
+        let mut stop_time = use_signal(|| Local::now().format(TIME_FORMAT).to_string());
+        let task_date_time = if let Some(task) = group.tasks.first() {
+            task.start_time
+        } else {
+            Local::now()
+        };
+        let date_string = task_date_time.format("%h %e").to_string();
+        let month_day_year_t = use_signal(|| task_date_time.format("%Y-%m-%dT").to_string());
+
+        rsx! {
+            div { class: "sheet-contents",
+                h2 { {loc!("add-to-group")} }
+                input {
+                    class: "sheet-task-input",
+                    value: "{group.to_string()}",
+                    placeholder: group.to_string(),
+                    disabled: true,
+                }
+
+                // TODO: Test min/max on device (may work on device but not in simulator)
+                br {}
+                label { class: "sheet-label", {loc!("start-colon") + " " + {&date_string}} }
+                input {
+                    class: "sheet-task-datetime",
+                    r#type: "time",
+                    oninput: move |event| {
+                        if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                            &(month_day_year_t.cloned() + &event.value()),
+                        ) {
+                            if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                                &(month_day_year_t.cloned() + &stop_time.cloned()),
+                            ) {
+                                if parsed_start_time < parsed_stop_time {
+                                    start_time.set(event.value())
+                                } else {
+                                    start_time.set(start_time.cloned());
+                                }
+                            }
+                        }
+                    },
+                    value: "{start_time}",
+                    max: "{stop_time}", // Seems unsupported by iOS
+                }
+                br {}
+                label { class: "sheet-label", {loc!("stop-colon") + " " + {&date_string}} }
+                input {
+                    class: "sheet-task-datetime",
+                    r#type: "time",
+                    oninput: move |event| {
+                        if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                            &(month_day_year_t.cloned() + &event.value()),
+                        ) {
+                            if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                                &(month_day_year_t.cloned() + &start_time.cloned()),
+                            ) {
+                                if parsed_start_time > parsed_stop_time {
+                                    stop_time.set(event.value())
+                                } else {
+                                    stop_time.set(stop_time.cloned());
+                                }
+                            }
+                        }
+                    },
+                    value: "{stop_time}",
+                    min: "{start_time}", // Seems unsupported by iOS
+                }
+                br {}
+
+                button {
+                    class: "sheet-cancel-button",
+                    onclick: move |_| {
+                        let mut state = use_context::<state::FurState>();
+                        let mut new_sheets = state.sheets.read().clone();
+                        new_sheets.add_to_group_sheet = None;
+                        state.sheets.set(new_sheets);
+                    },
+                    {loc!("cancel")}
+                }
+                button {
+                    class: "sheet-primary-button",
+                    onclick: move |_| {
+                        if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                            &(month_day_year_t.cloned() + &start_time.cloned()),
+                        ) {
+                            if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                                &(month_day_year_t.cloned() + &stop_time.cloned())
+                            ) {
+                                let (name, project, tags, rate) = formatters::split_task_input(
+                                    &group.to_string(),
+                                );
+                                if let Err(e) = database::tasks::insert_task(
+                                    &FurTask::new(
+                                        name,
+                                        parsed_start_time,
+                                        parsed_stop_time,
+                                        tags,
+                                        project,
+                                        rate,
+                                        String::new(),
+                                    ),
+                                ) {
+                                    eprintln!("Error inserting task into database: {}", e);
+                                }
+                                let mut state = use_context::<state::FurState>();
+                                let mut new_sheets = state.sheets.read().clone();
+                                new_sheets.group_details_sheet = None;
+                                new_sheets.add_to_group_sheet = None;
+                                state.sheets.set(new_sheets);
+                                task_history::update_task_history(
+                                    use_context::<state::FurState>().settings.read().days_to_show,
+                                );
+                            }
+                        }
+                    },
+                    {loc!("save")}
+                }
+            }
+        }
+    } else {
+        rsx! {}
+    }
+}
+
 fn parse_datetime_from_str(datetime_str: &str) -> MappedLocalTime<DateTime<Local>> {
-    match NaiveDateTime::parse_from_str(datetime_str, TIME_FORMAT) {
+    match NaiveDateTime::parse_from_str(datetime_str, DATE_TIME_FORMAT) {
         Ok(naive) => Local.from_local_datetime(&naive),
         Err(_) => LocalResult::None,
     }
