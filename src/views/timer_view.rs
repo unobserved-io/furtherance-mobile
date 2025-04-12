@@ -387,7 +387,7 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                 div { id: "group-buttons-row",
                     div {
                         button {
-                            class: "close-sheet-button",
+                            class: "no-bg-button",
                             onclick: move |_| {
                                 let mut state = use_context::<state::FurState>();
                                 let mut new_sheets = state.sheets.read().clone();
