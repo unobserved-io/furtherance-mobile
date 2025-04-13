@@ -14,9 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use chrono::{
-    format::ParseErrorKind, offset::LocalResult, DateTime, Local, NaiveDate, ParseError, TimeZone,
-};
+use chrono::{offset::LocalResult, Local, NaiveDate, TimeZone};
 use dioxus::prelude::*;
 use dioxus_free_icons::{
     icons::bs_icons::{BsCheckSquare, BsPlayFill, BsPlus, BsSquare},
@@ -55,8 +53,19 @@ pub fn TodosView() -> Element {
             }
         }
 
-        div { class: if sheets.new_todo_is_shown { "overlay visible" } else { "overlay" }, "" }
-        div { class: if sheets.new_todo_is_shown { "sheet visible" } else { "sheet" }, NewTodoSheet {} }
+        div { class: if sheets.new_todo_is_shown || sheets.edit_todo_sheet.is_some() { "overlay visible" } else { "overlay" },
+            ""
+        }
+        div { class: if sheets.new_todo_is_shown { "sheet visible" } else { "sheet" },
+            if sheets.new_todo_is_shown {
+                NewTodoSheet {}
+            }
+        }
+        div { class: if sheets.edit_todo_sheet.is_some() { "sheet visible" } else { "sheet" },
+            if sheets.edit_todo_sheet.is_some() {
+                EditTodoSheet { todo: sheets.edit_todo_sheet.clone() }
+            }
+        }
     }
 }
 
@@ -91,6 +100,7 @@ fn TodoTitleRow(date: NaiveDate) -> Element {
 #[component]
 fn TodoListItem(todo: FurTodo) -> Element {
     let mut todo_clone = todo.clone();
+    let todo_clone_two = todo.clone();
     rsx! {
         div { id: "todo-item",
             div { class: "todo-checkbox",
@@ -119,7 +129,13 @@ fn TodoListItem(todo: FurTodo) -> Element {
                 }
             }
 
-            div { class: "todo-text",
+            div {
+                class: "todo-text",
+                onclick: move |_| {
+                    let mut new_sheet = use_context::<state::FurState>().sheets.cloned();
+                    new_sheet.edit_todo_sheet = Some(todo_clone_two.clone());
+                    use_context::<state::FurState>().sheets.set(new_sheet);
+                },
                 p { class: if todo.is_completed { "strikethrough" } else { "" },
                     span { class: "bold", "{todo.name}" }
 
@@ -236,5 +252,90 @@ fn NewTodoSheet() -> Element {
                 "{save_text}"
             }
         }
+    }
+}
+
+#[component]
+fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
+    if let Some(todo) = todo {
+        let todo_clone = todo.clone();
+        let mut todo_input = use_signal(|| todo.to_string());
+        let mut date = use_signal(|| todo.date.date_naive().to_string());
+
+        rsx! {
+            div { class: "sheet-contents",
+                h2 { {loc!("edit-todo")} }
+                input {
+                    class: "sheet-task-input",
+                    value: "{todo_input}",
+                    oninput: move |event| {
+                        let new_value = validate_task_input(event.value());
+                        todo_input.set(new_value);
+                    },
+                    placeholder: loc!("task-input-placeholder"),
+                }
+
+                br {}
+                label { class: "sheet-label", {loc!("date-colon")} }
+                input {
+                    class: "sheet-todo-date",
+                    r#type: "date",
+                    oninput: move |event| { date.set(event.value()) },
+                    value: "{date}",
+                }
+
+                br {}
+                button {
+                    class: "sheet-cancel-button",
+                    onclick: move |_| {
+                        let mut state = use_context::<state::FurState>();
+                        let mut new_sheets = state.sheets.read().clone();
+                        new_sheets.edit_todo_sheet = None;
+                        state.sheets.set(new_sheets);
+                    },
+                    {loc!("cancel")}
+                }
+                button {
+                    class: "sheet-primary-button",
+                    onclick: move |event| {
+                        if todo_input.read().trim().is_empty() {
+                            event.prevent_default();
+                        } else {
+                            if let Ok(naive_date) = NaiveDate::parse_from_str(
+                                &date.cloned(),
+                                "%Y-%m-%d",
+                            ) {
+                                if let Some(naive_datetime) = naive_date.and_hms_opt(0, 0, 0) {
+                                    if let LocalResult::Single(parsed_datetime) = Local
+                                        .from_local_datetime(&naive_datetime)
+                                    {
+                                        let (name, project, tags, rate) = formatters::split_task_input(
+                                            &todo_input.cloned(),
+                                        );
+                                        let mut new_todo = todo_clone.clone();
+                                        new_todo.name = name;
+                                        new_todo.project = project;
+                                        new_todo.tags = tags;
+                                        new_todo.rate = rate;
+                                        new_todo.date = parsed_datetime;
+                                        if let Err(e) = database::todos::update_todo(&new_todo) {
+                                            eprintln!("Error updating todo in database: {}", e);
+                                        }
+                                        let mut state = use_context::<state::FurState>();
+                                        let mut new_sheets = state.sheets.read().clone();
+                                        new_sheets.edit_todo_sheet = None;
+                                        state.sheets.set(new_sheets);
+                                        update_all_todos();
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {loc!("save")}
+                }
+            }
+        }
+    } else {
+        rsx! {}
     }
 }

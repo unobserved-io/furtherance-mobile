@@ -106,7 +106,7 @@ fn App() -> Element {
 
         if !sheets.new_task_is_shown && !sheets.new_shortcut_is_shown
             && !sheets.new_todo_is_shown && sheets.task_edit_sheet.is_none()
-            && sheets.group_details_sheet.is_none()
+            && sheets.group_details_sheet.is_none() && sheets.edit_todo_sheet.is_none()
         {
             BottomNav {}
         }

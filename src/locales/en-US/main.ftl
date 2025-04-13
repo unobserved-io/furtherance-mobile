@@ -57,6 +57,7 @@ create-shortcut = Create shortcut
 
 ## Todos
 new-todo = New Todo
+edit-todo = Edit Todo
 
 ## Reports
 charts = Charts
