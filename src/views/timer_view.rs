@@ -447,18 +447,31 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                     state.alert.set(alert.clone());
                                 }
                                 if let Some(task_group) = task_group_clone_three.clone() {
-                                    *TASK_IDS_TO_DELETE.write() = Some(task_group.all_task_ids());
-                                    alert.is_shown = true;
-                                    alert.title = loc!("delete-all-question");
-                                    alert.message = loc!("delete-all-description");
-                                    alert.confirm_button = (loc!("delete-all"), || delete_whole_group());
-                                    alert.cancel_button = Some((loc!("cancel"), || close_alert()));
-                                    state.alert.set(alert.clone());
+                                    let settings = state.settings.read().clone();
+                                    if settings.show_delete_confirmation {
+                                        *TASK_IDS_TO_DELETE.write() = Some(task_group.all_task_ids());
+                                        alert.is_shown = true;
+                                        alert.title = loc!("delete-all-question");
+                                        alert.message = loc!("delete-all-description");
+                                        alert.confirm_button = (loc!("delete-all"), || delete_whole_group());
+                                        alert.cancel_button = Some((loc!("cancel"), || close_alert()));
+                                        state.alert.set(alert.clone());
+                                    } else {
+                                        if let Err(e) = database::tasks::delete_tasks_by_ids(&task_group.all_task_ids()) {
+                                            eprintln!("Failed to delete tasks: {}", e);
+                                        }
+                                        let mut state = use_context::<state::FurState>();
+                                        let mut new_sheets = state.sheets.read().clone();
+                                        new_sheets.group_details_sheet = None;
+                                        state.sheets.set(new_sheets);
+                                        task_history::update_task_history(
+                                            use_context::<state::FurState>().settings.read().days_to_show,
+                                        );
+                                    }
                                 }
                             },
                             Icon { icon: BsTrash3, width: 25, height: 25 }
                         }
-                    
                     }
                     div {
                         button {
