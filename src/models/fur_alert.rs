@@ -33,4 +33,8 @@ impl FurAlert {
             cancel_button: None,
         }
     }
+
+    pub fn close(&mut self) {
+        self.is_shown = false;
+    }
 }

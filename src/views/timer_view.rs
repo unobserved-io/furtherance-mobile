@@ -22,12 +22,12 @@ use chrono::{
 };
 use dioxus::prelude::*;
 use dioxus_free_icons::{
-    icons::bs_icons::{BsPencil, BsPlayFill, BsPlus, BsStopFill, BsX},
+    icons::bs_icons::{BsPencil, BsPlayFill, BsPlus, BsPlusLg, BsStopFill, BsTrash3, BsXLg},
     Icon,
 };
 use fluent::FluentValue;
 
-use crate::state;
+use crate::state::{self, TASK_IDS_TO_DELETE};
 use crate::{
     constants::SHEET_CSS,
     helpers::{
@@ -386,6 +386,10 @@ fn NewTaskSheet() -> Element {
 fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
     let task_group_clone = task_group.clone();
     let task_group_clone_two = task_group.clone();
+    let task_group_clone_three = task_group.clone();
+    let mut state = use_context::<state::FurState>();
+    let mut alert = state.alert.cloned();
+
     rsx! {
         if let Some(group) = task_group {
             div { class: "sheet-contents",
@@ -400,7 +404,7 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                 new_sheets.add_to_group_sheet = task_group_clone.clone();
                                 state.sheets.set(new_sheets);
                             },
-                            Icon { icon: BsPlus, width: 40, height: 40 }
+                            Icon { icon: BsPlusLg, width: 25, height: 25 }
                         }
 
                         button {
@@ -413,16 +417,60 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                             },
                             Icon { icon: BsPencil, width: 25, height: 25 }
                         }
+
+                        button {
+                            class: "no-bg-button",
+                            onclick: move |_| {
+                                fn delete_whole_group() {
+                                    if let Some(task_ids) = TASK_IDS_TO_DELETE.cloned() {
+                                        if let Err(e) = database::tasks::delete_tasks_by_ids(&task_ids) {
+                                            eprintln!("Failed to delete tasks: {}", e);
+                                        }
+                                    }
+                                    let mut state = use_context::<state::FurState>();
+                                    let mut alert = state.alert.cloned();
+                                    let mut new_sheets = state.sheets.read().clone();
+                                    new_sheets.group_details_sheet = None;
+                                    state.sheets.set(new_sheets);
+                                    *TASK_IDS_TO_DELETE.write() = None;
+                                    alert.close();
+                                    state.alert.set(alert.clone());
+                                    task_history::update_task_history(
+                                        use_context::<state::FurState>().settings.read().days_to_show,
+                                    );
+                                }
+                                fn close_alert() {
+                                    let mut state = use_context::<state::FurState>();
+                                    let mut alert = state.alert.cloned();
+                                    *TASK_IDS_TO_DELETE.write() = None;
+                                    alert.close();
+                                    state.alert.set(alert.clone());
+                                }
+                                if let Some(task_group) = task_group_clone_three.clone() {
+                                    *TASK_IDS_TO_DELETE.write() = Some(task_group.all_task_ids());
+                                    alert.is_shown = true;
+                                    alert.title = loc!("delete-all-question");
+                                    alert.message = loc!("delete-all-description");
+                                    alert.confirm_button = (loc!("delete-all"), || delete_whole_group());
+                                    alert.cancel_button = Some((loc!("cancel"), || close_alert()));
+                                    state.alert.set(alert.clone());
+                                }
+                            },
+                            Icon { icon: BsTrash3, width: 25, height: 25 }
+                        }
+                    
                     }
-                    button {
-                        class: "close-sheet-button",
-                        onclick: move |_| {
-                            let mut state = use_context::<state::FurState>();
-                            let mut new_sheets = state.sheets.read().clone();
-                            new_sheets.group_details_sheet = None;
-                            state.sheets.set(new_sheets);
-                        },
-                        Icon { icon: BsX, width: 40, height: 40 }
+                    div {
+                        button {
+                            class: "close-sheet-button",
+                            onclick: move |_| {
+                                let mut state = use_context::<state::FurState>();
+                                let mut new_sheets = state.sheets.read().clone();
+                                new_sheets.group_details_sheet = None;
+                                state.sheets.set(new_sheets);
+                            },
+                            Icon { icon: BsXLg, width: 25, height: 25 }
+                        }
                     }
                 }
 
