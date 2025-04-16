@@ -457,7 +457,9 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                         alert.cancel_button = Some((loc!("cancel"), || close_alert()));
                                         state.alert.set(alert.clone());
                                     } else {
-                                        if let Err(e) = database::tasks::delete_tasks_by_ids(&task_group.all_task_ids()) {
+                                        if let Err(e) = database::tasks::delete_tasks_by_ids(
+                                            &task_group.all_task_ids(),
+                                        ) {
                                             eprintln!("Failed to delete tasks: {}", e);
                                         }
                                         let mut state = use_context::<state::FurState>();

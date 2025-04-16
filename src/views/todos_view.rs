@@ -17,13 +17,16 @@
 use chrono::{offset::LocalResult, Local, NaiveDate, TimeZone};
 use dioxus::prelude::*;
 use dioxus_free_icons::{
-    icons::bs_icons::{BsCheckSquare, BsPlayFill, BsPlus, BsSquare},
+    icons::bs_icons::{BsCheckSquare, BsPlayFill, BsPlus, BsSquare, BsTrash3},
     Icon,
 };
 
 use crate::{
-    constants::TODO_CSS, helpers::views::todos::update_all_todos, loc, localization::Localization,
-    state,
+    constants::TODO_CSS,
+    helpers::views::todos::update_all_todos,
+    loc,
+    localization::Localization,
+    state::{self, TODO_ID_TO_DELETE},
 };
 use crate::{database, helpers::actions};
 use crate::{helpers::views::task_input::validate_task_input, state::TIMER_IS_RUNNING};
@@ -259,11 +262,65 @@ fn NewTodoSheet() -> Element {
 fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
     if let Some(todo) = todo {
         let todo_clone = todo.clone();
+        let todo_uid = todo.uid.clone();
         let mut todo_input = use_signal(|| todo.to_string());
         let mut date = use_signal(|| todo.date.date_naive().to_string());
 
         rsx! {
             div { class: "sheet-contents",
+                div { id: "group-buttons-row",
+                    button {
+                        class: "no-bg-button",
+                        onclick: move |_| {
+                            fn delete_todo() {
+                                if let Some(todo_id) = TODO_ID_TO_DELETE.cloned() {
+                                    if let Err(e) = database::todos::delete_todo_by_id(&todo_id) {
+                                        eprintln!("Failed to delete todo: {}", e);
+                                    }
+                                }
+                                let mut state = use_context::<state::FurState>();
+                                let mut alert = state.alert.cloned();
+                                let mut new_sheets = state.sheets.read().clone();
+                                new_sheets.edit_todo_sheet = None;
+                                state.sheets.set(new_sheets);
+                                *TODO_ID_TO_DELETE.write() = None;
+                                alert.close();
+                                state.alert.set(alert.clone());
+                                update_all_todos();
+                            }
+                            fn close_alert() {
+                                let mut state = use_context::<state::FurState>();
+                                let mut alert = state.alert.cloned();
+                                *TODO_ID_TO_DELETE.write() = None;
+                                alert.close();
+                                state.alert.set(alert.clone());
+                            }
+                            let mut state = use_context::<state::FurState>();
+                            let mut alert = state.alert.cloned();
+                            let settings = state.settings.read().clone();
+                            if settings.show_delete_confirmation {
+                                *TODO_ID_TO_DELETE.write() = Some(todo_uid.clone());
+                                alert.is_shown = true;
+                                alert.title = loc!("delete-todo-question");
+                                alert.message = loc!("delete-todo-description");
+                                alert.confirm_button = (loc!("delete"), || delete_todo());
+                                alert.cancel_button = Some((loc!("cancel"), || close_alert()));
+                                state.alert.set(alert.clone());
+                            } else {
+                                if let Err(e) = database::todos::delete_todo_by_id(&todo_uid) {
+                                    eprintln!("Failed to delete todo: {}", e);
+                                }
+                                let mut state = use_context::<state::FurState>();
+                                let mut new_sheets = state.sheets.read().clone();
+                                new_sheets.edit_todo_sheet = None;
+                                state.sheets.set(new_sheets);
+                                update_all_todos();
+                            }
+                        },
+                        Icon { icon: BsTrash3, width: 25, height: 25 }
+                    }
+                }
+
                 h2 { {loc!("edit-todo")} }
                 input {
                     class: "sheet-task-input",
