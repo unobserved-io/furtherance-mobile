@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::{fur_task::FurTask, fur_task_group::FurTaskGroup, fur_todo::FurTodo};
+use super::{
+    fur_shortcut::FurShortcut, fur_task::FurTask, fur_task_group::FurTaskGroup, fur_todo::FurTodo,
+};
 
 #[derive(Clone, Debug)]
 pub struct FurSheet {
@@ -26,6 +28,7 @@ pub struct FurSheet {
     pub add_to_group_sheet: Option<FurTaskGroup>,
     pub edit_group_sheet: Option<FurTaskGroup>,
     pub edit_todo_sheet: Option<FurTodo>,
+    pub edit_shortcut_sheet: Option<FurShortcut>,
 }
 
 impl FurSheet {
@@ -39,6 +42,7 @@ impl FurSheet {
             add_to_group_sheet: None,
             edit_group_sheet: None,
             edit_todo_sheet: None,
+            edit_shortcut_sheet: None,
         }
     }
 }

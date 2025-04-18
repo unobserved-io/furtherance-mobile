@@ -56,23 +56,21 @@ impl FurShortcut {
     }
 }
 
-impl fmt::Display for FurShortcut {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.name)?;
+impl ToString for FurShortcut {
+    fn to_string(&self) -> String {
+        let mut shortcut_string: String = self.name.to_string();
 
         if !self.project.is_empty() {
-            write!(f, " @{}", self.project)?;
+            shortcut_string += &format!(" @{}", self.project);
         }
-
         if !self.tags.is_empty() {
-            write!(f, " {}", self.tags)?;
+            shortcut_string += &format!(" #{}", self.tags);
         }
-
         if self.rate != 0.0 {
-            write!(f, " ${:.2}", self.rate)?;
+            shortcut_string += &format!(" ${:.2}", self.rate);
         }
 
-        Ok(())
+        shortcut_string
     }
 }
 

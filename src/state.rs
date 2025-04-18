@@ -46,6 +46,7 @@ pub static TIMER_IS_RUNNING: GlobalSignal<bool> = Global::new(|| false);
 pub static TASK_INPUT: GlobalSignal<String> = Global::new(|| String::new());
 pub static TIMER_START_TIME: GlobalSignal<DateTime<Local>> = Global::new(|| Local::now());
 pub static TASK_IDS_TO_DELETE: GlobalSignal<Option<Vec<String>>> = Global::new(|| None);
+pub static SHORTCUT_ID_TO_DELETE: GlobalSignal<Option<String>> = Global::new(|| None);
 pub static TODO_ID_TO_DELETE: GlobalSignal<Option<String>> = Global::new(|| None);
 
 #[derive(Debug, Clone, Copy)]

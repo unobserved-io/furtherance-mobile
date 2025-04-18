@@ -16,6 +16,29 @@
     line-height: 1.2;
 }
 
-#add-new-shortcut {
+.top-shortcut-buttons {
     float: right;
+    margin-bottom: 1rem;
 }
+
+@keyframes wiggle {
+  0% {
+      rotate: 0deg;
+      translate: 0 0
+  }
+
+  25% {
+      rotate: -1deg;
+      translate: 0 0
+  }
+
+  80% {
+      rotate: 1deg;
+      translate: 0 0
+  }
+}
+
+.shortcut-bubble.wiggle {
+  animation: wiggle 0.5s ease-in-out infinite;
+}
+
