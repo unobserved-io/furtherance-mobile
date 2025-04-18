@@ -532,10 +532,69 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
         let mut stop_time = use_signal(|| task.stop_time.format(DATE_TIME_FORMAT).to_string());
 
         let task_uid = task.uid.clone();
+        let task_uid_vec: Vec<String> = vec![task.uid.clone()];
         let task_currency = task.currency.clone();
 
         rsx! {
-            div { class: "sheet-contents",
+            div {
+                class: "sheet-contents",
+                div { id: "group-buttons-row",
+                    button {
+                        class: "no-bg-button",
+                        onclick: move |_| {
+                            fn delete_task() {
+                                if let Some(tasks_id) = TASK_IDS_TO_DELETE.cloned() {
+                                    if let Err(e) = database::tasks::delete_tasks_by_ids(&tasks_id) {
+                                        eprintln!("Failed to delete task: {}", e);
+                                    }
+                                }
+                                let mut state = use_context::<state::FurState>();
+                                let mut alert = state.alert.cloned();
+                                let mut new_sheets = state.sheets.read().clone();
+                                new_sheets.task_edit_sheet = None;
+                                state.sheets.set(new_sheets);
+                                *TASK_IDS_TO_DELETE.write() = None;
+                                alert.close();
+                                state.alert.set(alert.clone());
+                                task_history::update_task_history(
+                                    use_context::<state::FurState>().settings.read().days_to_show,
+                                );
+                            }
+                            fn close_alert() {
+                                let mut state = use_context::<state::FurState>();
+                                let mut alert = state.alert.cloned();
+                                *TASK_IDS_TO_DELETE.write() = None;
+                                alert.close();
+                                state.alert.set(alert.clone());
+                            }
+                            let mut state = use_context::<state::FurState>();
+                            let mut alert = state.alert.cloned();
+                            let settings = state.settings.read().clone();
+                            if settings.show_delete_confirmation {
+                                *TASK_IDS_TO_DELETE.write() = Some(task_uid_vec.clone());
+                                alert.is_shown = true;
+                                alert.title = loc!("delete-task-question");
+                                alert.message = loc!("delete-task-description");
+                                alert.confirm_button = (loc!("delete"), || delete_task());
+                                alert.cancel_button = Some((loc!("cancel"), || close_alert()));
+                                state.alert.set(alert.clone());
+                            } else {
+                                if let Err(e) = database::tasks::delete_tasks_by_ids(&task_uid_vec) {
+                                    eprintln!("Failed to delete task: {}", e);
+                                }
+                                let mut state = use_context::<state::FurState>();
+                                let mut new_sheets = state.sheets.read().clone();
+                                new_sheets.task_edit_sheet = None;
+                                state.sheets.set(new_sheets);
+                                task_history::update_task_history(
+                                    use_context::<state::FurState>().settings.read().days_to_show,
+                                );
+                            }
+                        },
+                        Icon { icon: BsTrash3, width: 25, height: 25 }
+                    }
+                }
+
                 h2 { {loc!("edit-task")} }
                 input {
                     class: "sheet-task-input",
