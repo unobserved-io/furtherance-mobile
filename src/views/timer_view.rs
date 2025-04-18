@@ -215,7 +215,11 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
             class: "task-bubble",
             onclick: move |_| {
                 let mut new_sheet = use_context::<state::FurState>().sheets.cloned();
-                new_sheet.group_details_sheet = Some(task_group.clone());
+                if number_of_tasks == 1 {
+                    new_sheet.task_edit_sheet = Some(task_group.tasks.first().unwrap().clone());
+                } else {
+                    new_sheet.group_details_sheet = Some(task_group.clone());
+                }
                 use_context::<state::FurState>().sheets.set(new_sheet);
             },
 
