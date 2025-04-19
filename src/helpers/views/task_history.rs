@@ -16,7 +16,11 @@
 
 use std::collections::BTreeMap;
 
-use dioxus::{hooks::use_context, signals::Writable};
+use chrono::Local;
+use dioxus::{
+    hooks::use_context,
+    signals::{Readable, Writable},
+};
 
 use crate::{
     database::{
@@ -74,7 +78,35 @@ fn group_tasks_by_date(tasks: Vec<FurTask>) -> BTreeMap<chrono::NaiveDate, Vec<F
 }
 
 pub fn update_task_history(days_to_show: i64) {
-    use_context::<state::FurState>()
-        .tasks
-        .set(get_task_history(days_to_show));
+    let mut state = use_context::<state::FurState>();
+    let task_history = get_task_history(days_to_show);
+    state.tasks.set(task_history.clone());
+    update_todos_after_refresh(days_to_show);
+}
+
+pub fn update_todos_after_refresh(days_to_show: i64) {
+    let today = Local::now().date_naive();
+    let task_history = get_task_history(days_to_show);
+    let mut state = use_context::<state::FurState>();
+    let mut new_todos = state.todos.cloned();
+
+    if let Some(todays_todos) = new_todos.get_mut(&today) {
+        if let Some(todays_tasks) = task_history.get(&today) {
+            for todo in todays_todos.iter_mut() {
+                if let Some(_) = todays_tasks
+                    .iter()
+                    .find(|task_group| task_group.to_string() == todo.to_string())
+                {
+                    match database::todos::set_todo_completed(&todo.uid) {
+                        Ok(_) => todo.is_completed = true,
+                        Err(e) => {
+                            eprintln!("Error while marking todo {} as completed: {}", todo.uid, e)
+                        }
+                    }
+                }
+            }
+
+            state.todos.set(new_todos)
+        }
+    };
 }
