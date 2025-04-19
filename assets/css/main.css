@@ -16,11 +16,15 @@ body {
     overscroll-behavior: none;
 }
 
-#page-content {
+.page-content {
     padding-bottom: 80px;
     max-height: calc(100vh - 80px);
     overflow-y: auto;
     position: relative;
+}
+
+.page-content::-webkit-scrollbar {
+    display: none;
 }
 
 .bottom-nav {
