@@ -141,7 +141,9 @@ pub fn TaskInput() -> Element {
                     let new_value = validate_task_input(event.value());
                     *state::TASK_INPUT.write() = new_value.clone();
                     if state::TIMER_IS_RUNNING.cloned() {
-                        if let Err(e) = database::persistence::update_persisting_timer_task_input(&new_value) {
+                        if let Err(e) = database::persistence::update_persisting_timer_task_input(
+                            &new_value,
+                        ) {
                             eprintln!("Error updating persisting timer task input: {}", e);
                         }
                     }
@@ -541,8 +543,7 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
         let task_currency = task.currency.clone();
 
         rsx! {
-            div {
-                class: "sheet-contents",
+            div { class: "sheet-contents",
                 div { id: "group-buttons-row",
                     button {
                         class: "no-bg-button",
