@@ -16,6 +16,7 @@
 
 mod models {
     pub mod fur_alert;
+    pub mod fur_persist;
     pub mod fur_pomodoro;
     pub mod fur_settings;
     pub mod fur_sheet;
@@ -27,6 +28,7 @@ mod models {
 }
 pub mod database {
     pub mod init;
+    pub mod persistence;
     pub mod shortcuts;
     pub mod sync;
     pub mod tasks;
@@ -92,6 +94,16 @@ fn main() {
 #[component]
 fn App() -> Element {
     state::use_state_provider();
+    match database::persistence::retrieve_persisting_timer() {
+        Ok(persisting_timer) => {
+            if persisting_timer.is_running {
+                *state::TIMER_IS_RUNNING.write() = persisting_timer.is_running;
+                *state::TASK_INPUT.write() = persisting_timer.task_input;
+                *state::TIMER_START_TIME.write() = persisting_timer.start_time;
+            }
+        }
+        Err(e) => eprintln!("Error retrieving persisting timer: {}", e),
+    }
     ensure_timer_running();
     let state = use_context::<state::FurState>();
     let alert = state.alert.read().clone();

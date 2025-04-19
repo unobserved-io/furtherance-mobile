@@ -139,7 +139,12 @@ pub fn TaskInput() -> Element {
                 value: "{state::TASK_INPUT}",
                 oninput: move |event| {
                     let new_value = validate_task_input(event.value());
-                    *state::TASK_INPUT.write() = new_value;
+                    *state::TASK_INPUT.write() = new_value.clone();
+                    if state::TIMER_IS_RUNNING.cloned() {
+                        if let Err(e) = database::persistence::update_persisting_timer_task_input(&new_value) {
+                            eprintln!("Error updating persisting timer task input: {}", e);
+                        }
+                    }
                 },
                 placeholder: loc!("task-input-placeholder"),
             }

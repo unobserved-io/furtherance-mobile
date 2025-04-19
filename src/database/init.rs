@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rusqlite::{Connection, Result};
+use chrono::Local;
+use rusqlite::{params, Connection, Result};
 use std::path::PathBuf;
 
 use crate::models::fur_settings;
@@ -97,6 +98,26 @@ pub fn db_init() -> Result<()> {
             last_updated INTEGER DEFAULT 0
         )",
         [],
+    )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS persistence (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            is_running BOOLEAN DEFAULT 0,
+            task_input TEXT,
+            start_time TIMESTAMP
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "INSERT OR IGNORE INTO persistence (
+            id,
+            is_running,
+            task_input,
+            start_time
+        ) values (1, ?1, NULL, NULL)",
+        params![false],
     )?;
 
     Ok(())

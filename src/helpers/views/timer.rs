@@ -16,6 +16,7 @@
 
 use std::time::Duration;
 
+use aes_gcm::aead::consts::False;
 use chrono::{DateTime, Local, TimeDelta};
 use dioxus::{
     hooks::use_context,
@@ -29,7 +30,10 @@ use crate::{
     helpers::{server::sync::request_sync, views::task_history::update_task_history},
     loc,
     localization::Localization,
-    models::fur_task::FurTask,
+    models::{
+        fur_persist::{reset_persisting_timer, FurPersist},
+        fur_task::FurTask,
+    },
     state,
 };
 
@@ -96,13 +100,6 @@ pub fn ensure_timer_running() {
                         }
                         continue;
                     }
-
-                    // TODO: Write autosave every minute
-                    // if seconds_elapsed > 1 && seconds_elapsed % 60 == 0 {
-                    //     if let Err(e) = write_autosave(&self.task_input, self.timer_start_time) {
-                    //         eprintln!("Error writing autosave: {e}");
-                    //     }
-                    // }
                 }
             }
         });
@@ -124,7 +121,6 @@ pub fn stop_timer(stop_time: DateTime<Local>) {
     ))
     .expect("Couldn't write task to database.");
 
-    // TODO: - delete_autosave();
     reset_timer();
 }
 
@@ -141,11 +137,20 @@ pub fn start_timer() {
     }
 
     ensure_timer_running();
+
+    if let Err(e) = database::persistence::update_persisting_timer(&FurPersist {
+        is_running: true,
+        task_input: state::TASK_INPUT.cloned(),
+        start_time: state::TIMER_START_TIME.cloned(),
+    }) {
+        eprintln!("Error updating persisting timer: {}", e);
+    }
 }
 
 fn reset_timer() {
     *state::TASK_INPUT.write() = String::new();
     *state::TIMER_TEXT.write() = get_timer_text(0);
+    reset_persisting_timer();
 }
 
 pub fn get_timer_text(seconds_elapsed: i64) -> String {
