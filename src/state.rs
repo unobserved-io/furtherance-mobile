@@ -40,6 +40,23 @@ use crate::{
     NavTab,
 };
 
+pub static SETTINGS: GlobalSignal<FurSettings> =
+    Global::new(|| FurSettings::new().expect("Failed to load settings"));
+pub static SHORTCUTS: GlobalSignal<Vec<FurShortcut>> =
+    Global::new(|| shortcuts::get_all_shortcuts());
+pub static TASKS: GlobalSignal<BTreeMap<NaiveDate, Vec<FurTaskGroup>>> =
+    Global::new(|| task_history::get_task_history(365));
+pub static TODOS: GlobalSignal<BTreeMap<NaiveDate, Vec<FurTodo>>> =
+    Global::new(|| todos::get_all_todos());
+pub static USER: GlobalSignal<Option<FurUser>> = Global::new(|| server::sync::get_user());
+pub static SYNC_MESSAGE: GlobalSignal<Result<String, Box<dyn std::error::Error>>> =
+    Global::new(|| Ok(String::new()));
+pub static USER_FIELDS: GlobalSignal<FurUserFields> =
+    Global::new(|| server::sync::get_user_fields());
+pub static ALERT: GlobalSignal<FurAlert> = Global::new(|| FurAlert::new());
+pub static POMODORO: GlobalSignal<FurPomodoro> = Global::new(|| FurPomodoro::new());
+pub static SHEETS: GlobalSignal<FurSheet> = Global::new(|| FurSheet::new());
+
 pub static ACTIVE_TAB: GlobalSignal<NavTab> = Global::new(|| NavTab::Timer);
 pub static TIMER_TEXT: GlobalSignal<String> = Global::new(|| "0:00:00".to_string());
 pub static TIMER_IS_RUNNING: GlobalSignal<bool> = Global::new(|| false);
@@ -48,43 +65,3 @@ pub static TIMER_START_TIME: GlobalSignal<DateTime<Local>> = Global::new(|| Loca
 pub static TASK_IDS_TO_DELETE: GlobalSignal<Option<Vec<String>>> = Global::new(|| None);
 pub static SHORTCUT_ID_TO_DELETE: GlobalSignal<Option<String>> = Global::new(|| None);
 pub static TODO_ID_TO_DELETE: GlobalSignal<Option<String>> = Global::new(|| None);
-
-#[derive(Debug, Clone, Copy)]
-pub struct FurState {
-    pub alert: Signal<FurAlert>,
-    pub pomodoro: Signal<FurPomodoro>,
-    pub settings: Signal<FurSettings>,
-    pub sheets: Signal<FurSheet>,
-    pub shortcuts: Signal<Vec<FurShortcut>>,
-    pub tasks: Signal<BTreeMap<NaiveDate, Vec<FurTaskGroup>>>,
-    pub todos: Signal<BTreeMap<NaiveDate, Vec<FurTodo>>>,
-    pub user: Signal<Option<FurUser>>,
-    pub user_fields: Signal<FurUserFields>,
-    pub sync_message: Signal<Result<String, Box<dyn std::error::Error>>>,
-}
-
-pub fn use_state_provider() {
-    let alert = use_signal(|| FurAlert::new());
-    let pomodoro = use_signal(|| FurPomodoro::new());
-    let settings = use_signal(|| FurSettings::new().expect("Failed to load settings"));
-    let sheets = use_signal(|| FurSheet::new());
-    let shortcuts = use_signal(|| shortcuts::get_all_shortcuts());
-    let tasks = use_signal(|| task_history::get_task_history(365));
-    let todos = use_signal(|| todos::get_all_todos());
-    let user = use_signal(|| server::sync::get_user());
-    let user_fields = use_signal(|| server::sync::get_user_fields());
-    let sync_message = use_signal(|| Ok(String::new()));
-
-    use_context_provider(|| FurState {
-        alert,
-        pomodoro,
-        settings,
-        sheets,
-        shortcuts,
-        tasks,
-        todos,
-        user,
-        user_fields,
-        sync_message,
-    });
-}

@@ -29,32 +29,27 @@ use crate::{
 
 #[component]
 pub fn SettingsView() -> Element {
-    let mut state = use_context::<state::FurState>();
+    let pomodoro = state::SETTINGS.read().pomodoro;
+    let pomodoro_length = state::SETTINGS.read().pomodoro_length;
+    let pomodoro_break_length = state::SETTINGS.read().pomodoro_break_length;
+    let pomodoro_snooze_length = state::SETTINGS.read().pomodoro_snooze_length;
+    let pomodoro_extended_breaks = state::SETTINGS.read().pomodoro_extended_breaks;
+    let pomodoro_extended_break_interval = state::SETTINGS.read().pomodoro_extended_break_interval;
+    let pomodoro_extended_break_length = state::SETTINGS.read().pomodoro_extended_break_length;
 
-    // let user = state.user.read();
-    // let user_fields = state.user_fields.read();
+    let show_delete_confirmation = state::SETTINGS.read().show_delete_confirmation;
 
-    let pomodoro = state.settings.read().pomodoro;
-    let pomodoro_length = state.settings.read().pomodoro_length;
-    let pomodoro_break_length = state.settings.read().pomodoro_break_length;
-    let pomodoro_snooze_length = state.settings.read().pomodoro_snooze_length;
-    let pomodoro_extended_breaks = state.settings.read().pomodoro_extended_breaks;
-    let pomodoro_extended_break_interval = state.settings.read().pomodoro_extended_break_interval;
-    let pomodoro_extended_break_length = state.settings.read().pomodoro_extended_break_length;
+    let show_task_project = state::SETTINGS.read().show_task_project;
+    let show_task_tags = state::SETTINGS.read().show_task_tags;
+    let show_task_earnings = state::SETTINGS.read().show_task_earnings;
+    let show_seconds = state::SETTINGS.read().show_seconds;
+    let show_daily_time_total = state::SETTINGS.read().show_daily_time_total;
+    let dynamic_total = state::SETTINGS.read().dynamic_total;
+    let days_to_show = state::SETTINGS.read().days_to_show;
 
-    let show_delete_confirmation = state.settings.read().show_delete_confirmation;
-
-    let show_task_project = state.settings.read().show_task_project;
-    let show_task_tags = state.settings.read().show_task_tags;
-    let show_task_earnings = state.settings.read().show_task_earnings;
-    let show_seconds = state.settings.read().show_seconds;
-    let show_daily_time_total = state.settings.read().show_daily_time_total;
-    let dynamic_total = state.settings.read().dynamic_total;
-    let days_to_show = state.settings.read().days_to_show;
-
-    let show_todo_project = state.settings.read().show_todo_project;
-    let show_todo_tags = state.settings.read().show_todo_tags;
-    let show_todo_rate = state.settings.read().show_todo_rate;
+    let show_todo_project = state::SETTINGS.read().show_todo_project;
+    let show_todo_tags = state::SETTINGS.read().show_todo_tags;
+    let show_todo_rate = state::SETTINGS.read().show_todo_rate;
 
     // sync_server_col = sync_server_col.push(sync_button_row);
     // sync_server_col = sync_server_col.push_maybe(match &self.login_message {
@@ -79,66 +74,66 @@ pub fn SettingsView() -> Element {
                 SettingsDropDownRow {
                     label: loc!("server"),
                     list_items: ServerChoices::all_as_strings(),
-                    selected_item: state.user_fields.read().server_selection.to_string(),
+                    selected_item: state::USER_FIELDS.read().server_selection.to_string(),
                     onchange: move |event: Event<FormData>| {
-                        let mut user_fields_clone = state.user_fields.read().clone();
+                        let mut user_fields_clone = state::USER_FIELDS.read().clone();
                         if event.data.value() == ServerChoices::Official.to_string() {
                             user_fields_clone.server_selection = ServerChoices::Official;
                             user_fields_clone.server = OFFICIAL_SERVER.to_string();
                         } else {
                             user_fields_clone.server_selection = ServerChoices::Custom;
-                            if let Some(fur_user) = state.user.read().clone() {
+                            if let Some(fur_user) = state::USER.cloned() {
                                 user_fields_clone.server = fur_user.server;
                             } else {
                                 user_fields_clone.server = String::new();
                             }
                         }
-                        state.user_fields.set(user_fields_clone);
+                        *state::USER_FIELDS.write() = user_fields_clone;
                     },
                 }
-                if state.user_fields.read().server_selection == ServerChoices::Custom {
+                if state::USER_FIELDS.read().server_selection == ServerChoices::Custom {
                     SettingsInputRow {
                         label: loc!("server"),
                         input_type: "url".to_string(),
-                        value: state.user_fields.read().server.clone(),
+                        value: state::USER_FIELDS.read().server.clone(),
                         placeholder: loc!("server-placeholder"),
                         oninput: move |event: Event<FormData>| {
-                            let mut user_fields_clone = state.user_fields.read().clone();
+                            let mut user_fields_clone = state::USER_FIELDS.read().clone();
                             user_fields_clone.server = event.value();
-                            state.user_fields.set(user_fields_clone);
+                            *state::USER_FIELDS.write() = user_fields_clone;
                         },
                     }
                 }
                 SettingsInputRow {
                     label: loc!("email"),
                     input_type: "email".to_string(),
-                    value: state.user_fields.read().email.clone(),
+                    value: state::USER_FIELDS.read().email.clone(),
                     placeholder: loc!("email-placeholder"),
                     oninput: move |event: Event<FormData>| {
-                        let mut user_fields_clone = state.user_fields.read().clone();
+                        let mut user_fields_clone = state::USER_FIELDS.cloned();
                         user_fields_clone.email = event.value();
-                        state.user_fields.set(user_fields_clone);
+                        *state::USER_FIELDS.write() = user_fields_clone;
                     },
                 }
                 SettingsInputRow {
                     label: "Encryption key".to_string(),
                     input_type: "password".to_string(),
-                    value: state.user_fields.read().encryption_key.clone(),
+                    value: state::USER_FIELDS.read().encryption_key.clone(),
                     placeholder: "Key".to_string(),
                     oninput: move |event: Event<FormData>| {
-                        let mut user_fields_clone = state.user_fields.read().clone();
+                        let mut user_fields_clone = state::USER_FIELDS.cloned();
                         user_fields_clone.encryption_key = event.value();
-                        state.user_fields.set(user_fields_clone);
+                        *state::USER_FIELDS.write() = user_fields_clone;
                     },
                 }
                 SettingsButtonRow {
-                    label: if state.user.read().is_some() { "Log out".to_string() } else { "Log in".to_string() },
+                    label: if state::USER.read().is_some() { "Log out".to_string() } else { "Log in".to_string() },
                     dangerous: false,
                     onclick: move |_| {
-                        if state.user.read().is_some() {
+                        if state::USER.read().is_some() {
                             logout_button_pressed();
                         } else {
-                            let user_fields = state.user_fields.read().clone();
+                            let user_fields = state::USER_FIELDS.cloned();
                             if !user_fields.server.is_empty() && !user_fields.email.is_empty()
                                 && !user_fields.encryption_key.is_empty()
                             {
@@ -164,9 +159,8 @@ pub fn SettingsView() -> Element {
                     label: "Sync".to_string(),
                     dangerous: false,
                     onclick: move |_| {
-                        if state.user.read().is_some()
-                            && state
-                                .sync_message
+                        if state::USER.read().is_some()
+                            && state::SYNC_MESSAGE
                                 .read()
                                 .iter()
                                 .any(|message| message != &loc!("syncing"))
@@ -212,9 +206,9 @@ pub fn SettingsView() -> Element {
                     label: "Countdown timer".to_string(),
                     toggled: pomodoro,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_pomodoro(&!pomodoro) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                             *state::TIMER_TEXT.write() = timer::get_timer_text(0);
                         }
                     },
@@ -223,9 +217,9 @@ pub fn SettingsView() -> Element {
                     label: "Timer length".to_string(),
                     value: pomodoro_length,
                     onupdate: move |(delta, _)| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         match settings_clone.change_pomodoro_length(&(pomodoro_length + delta)) {
-                            Ok(_) => state.settings.set(settings_clone),
+                            Ok(_) => *state::SETTINGS.write() = settings_clone,
                             Err(e) => eprintln!("Error: {}", e),
                         }
                     },
@@ -234,11 +228,11 @@ pub fn SettingsView() -> Element {
                     label: "Break length".to_string(),
                     value: pomodoro_break_length,
                     onupdate: move |(delta, _)| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         match settings_clone
                             .change_pomodoro_break_length(&(pomodoro_break_length + delta))
                         {
-                            Ok(_) => state.settings.set(settings_clone),
+                            Ok(_) => *state::SETTINGS.write() = settings_clone,
                             Err(e) => eprintln!("Error: {}", e),
                         }
                     },
@@ -247,11 +241,11 @@ pub fn SettingsView() -> Element {
                     label: "Snooze length".to_string(),
                     value: pomodoro_snooze_length,
                     onupdate: move |(delta, _)| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         match settings_clone
                             .change_pomodoro_snooze_length(&(pomodoro_snooze_length + delta))
                         {
-                            Ok(_) => state.settings.set(settings_clone),
+                            Ok(_) => *state::SETTINGS.write() = settings_clone,
                             Err(e) => eprintln!("Error: {}", e),
                         }
                     },
@@ -260,11 +254,11 @@ pub fn SettingsView() -> Element {
                     label: "Extended breaks".to_string(),
                     toggled: pomodoro_extended_breaks,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone
                             .change_pomodoro_extended_breaks(&!pomodoro_extended_breaks)
                         {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -272,13 +266,13 @@ pub fn SettingsView() -> Element {
                     label: "Extended break interval".to_string(),
                     value: pomodoro_extended_break_interval,
                     onupdate: move |(delta, _)| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         match settings_clone
                             .change_pomodoro_extended_break_interval(
                                 &(pomodoro_extended_break_interval + delta),
                             )
                         {
-                            Ok(_) => state.settings.set(settings_clone),
+                            Ok(_) => *state::SETTINGS.write() = settings_clone,
                             Err(e) => eprintln!("Error: {}", e),
                         }
                     },
@@ -287,13 +281,13 @@ pub fn SettingsView() -> Element {
                     label: "Extended break length".to_string(),
                     value: pomodoro_extended_break_length,
                     onupdate: move |(delta, _)| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         match settings_clone
                             .change_pomodoro_extended_break_length(
                                 &(pomodoro_extended_break_length + delta),
                             )
                         {
-                            Ok(_) => state.settings.set(settings_clone),
+                            Ok(_) => *state::SETTINGS.write() = settings_clone,
                             Err(e) => eprintln!("Error: {}", e),
                         }
                     },
@@ -306,11 +300,11 @@ pub fn SettingsView() -> Element {
                     label: "Show delete confirmation".to_string(),
                     toggled: show_delete_confirmation,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone
                             .change_show_delete_confirmation(&!show_delete_confirmation)
                         {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -322,9 +316,9 @@ pub fn SettingsView() -> Element {
                     label: "Show project".to_string(),
                     toggled: show_task_project,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_task_project(&!show_task_project) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -332,9 +326,9 @@ pub fn SettingsView() -> Element {
                     label: "Show tags".to_string(),
                     toggled: show_task_tags,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_task_tags(&!show_task_tags) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -342,9 +336,9 @@ pub fn SettingsView() -> Element {
                     label: "Show earnings".to_string(),
                     toggled: show_task_earnings,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_task_earnings(&!show_task_earnings) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -352,9 +346,9 @@ pub fn SettingsView() -> Element {
                     label: "Show seconds".to_string(),
                     toggled: show_seconds,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_seconds(&!show_seconds) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -362,11 +356,11 @@ pub fn SettingsView() -> Element {
                     label: "Show daily time total".to_string(),
                     toggled: show_daily_time_total,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone
                             .change_show_daily_time_total(&!show_daily_time_total)
                         {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -374,9 +368,9 @@ pub fn SettingsView() -> Element {
                     label: "Dynamic total".to_string(), // TODO: Add sublabel
                     toggled: dynamic_total,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_daily_time_total(&!dynamic_total) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -384,9 +378,9 @@ pub fn SettingsView() -> Element {
                     label: "Days to show".to_string(),
                     value: days_to_show,
                     onupdate: move |(delta, _)| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         match settings_clone.change_pomodoro_length(&(days_to_show + delta)) {
-                            Ok(_) => state.settings.set(settings_clone),
+                            Ok(_) => *state::SETTINGS.write() = settings_clone,
                             Err(e) => eprintln!("Error: {}", e),
                         }
                     },
@@ -399,9 +393,9 @@ pub fn SettingsView() -> Element {
                     label: "Show project".to_string(),
                     toggled: show_todo_project,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_todo_project(&!show_todo_project) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -409,9 +403,9 @@ pub fn SettingsView() -> Element {
                     label: "Show tags".to_string(),
                     toggled: show_todo_tags,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_todo_tags(&!show_todo_tags) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -419,9 +413,9 @@ pub fn SettingsView() -> Element {
                     label: "Show earnings".to_string(),
                     toggled: show_todo_rate,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_todo_rate(&!show_todo_rate) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -433,9 +427,9 @@ pub fn SettingsView() -> Element {
                     label: "Show tags".to_string(),
                     toggled: show_todo_tags,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_todo_tags(&!show_todo_tags) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }
@@ -443,9 +437,9 @@ pub fn SettingsView() -> Element {
                     label: "Show earnings".to_string(),
                     toggled: show_todo_rate,
                     onchange: move |_| {
-                        let mut settings_clone = state.settings.read().clone();
+                        let mut settings_clone = state::SETTINGS.cloned();
                         if let Ok(_) = settings_clone.change_show_todo_rate(&!show_todo_rate) {
-                            state.settings.set(settings_clone);
+                            *state::SETTINGS.write() = settings_clone;
                         }
                     },
                 }

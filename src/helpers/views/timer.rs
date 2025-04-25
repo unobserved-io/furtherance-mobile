@@ -16,13 +16,8 @@
 
 use std::time::Duration;
 
-use aes_gcm::aead::consts::False;
 use chrono::{DateTime, Local, TimeDelta};
-use dioxus::{
-    hooks::use_context,
-    prelude::spawn,
-    signals::{Readable, Writable},
-};
+use dioxus::{prelude::spawn, signals::Readable};
 use std::sync::Once;
 
 use crate::{
@@ -53,10 +48,9 @@ pub fn ensure_timer_running() {
                     let seconds_elapsed = duration.num_seconds();
                     *state::TIMER_TEXT.write() = get_timer_text(seconds_elapsed);
 
-                    let mut state = use_context::<state::FurState>();
-                    let settings = state.settings.read().clone();
-                    let mut alert = state.alert.read().clone();
-                    let pomodoro = state.pomodoro.read().clone();
+                    let settings = state::SETTINGS.cloned();
+                    let mut alert = state::ALERT.cloned();
+                    let pomodoro = state::POMODORO.cloned();
 
                     if settings.pomodoro
                         && state::TIMER_TEXT.cloned() == "0:00:00".to_string()
@@ -77,7 +71,7 @@ pub fn ensure_timer_running() {
                                 alert.confirm_button =
                                     (loc!("continue"), || continue_after_break());
                                 alert.cancel_button = Some((loc!("stop"), || stop_after_break()));
-                                state.alert.set(alert);
+                                *state::ALERT.write() = alert;
                             } else {
                                 // TODO: Show notification
                                 // show_notification(
@@ -98,7 +92,7 @@ pub fn ensure_timer_running() {
                                 };
                                 alert.cancel_button =
                                     Some((loc!("stop"), || stop_pomodoro_timer()));
-                                state.alert.set(alert);
+                                *state::ALERT.write() = alert;
                             }
                         }
                         continue;
@@ -130,13 +124,12 @@ pub fn stop_timer(stop_time: DateTime<Local>) {
 pub fn start_timer() {
     *state::TIMER_START_TIME.write() = Local::now();
     *state::TIMER_IS_RUNNING.write() = true;
-    let mut state = use_context::<state::FurState>();
-    let settings = state.settings.read().clone();
-    let mut pomodoro = state.pomodoro.read().clone();
+    let settings = state::SETTINGS.cloned();
+    let mut pomodoro = state::POMODORO.cloned();
 
     if settings.pomodoro && !pomodoro.on_break {
         pomodoro.sessions += 1;
-        state.pomodoro.set(pomodoro);
+        *state::POMODORO.write() = pomodoro;
     }
 
     ensure_timer_running();
@@ -165,9 +158,8 @@ pub fn get_timer_text(seconds_elapsed: i64) -> String {
 }
 
 fn get_running_timer_text(seconds_elapsed: i64) -> String {
-    let state = use_context::<state::FurState>();
-    let settings = state.settings.read().clone();
-    let pomodoro = state.pomodoro.read().clone();
+    let settings = state::SETTINGS.cloned();
+    let pomodoro = state::POMODORO.cloned();
 
     if settings.pomodoro {
         let stop_time = if pomodoro.on_break {
@@ -201,9 +193,8 @@ fn get_running_timer_text(seconds_elapsed: i64) -> String {
 }
 
 pub fn get_stopped_timer_text() -> String {
-    let state = use_context::<state::FurState>();
-    let settings = state.settings.read().clone();
-    let pomodoro = state.pomodoro.read().clone();
+    let settings = state::SETTINGS.cloned();
+    let pomodoro = state::POMODORO.cloned();
 
     if settings.pomodoro {
         if pomodoro.on_break {
@@ -246,17 +237,16 @@ fn seconds_to_hm(total_seconds: i64) -> String {
 }
 
 fn stop_pomodoro_timer() {
-    let mut state = use_context::<state::FurState>();
-    let settings = state.settings.read().clone();
-    let mut alert = state.alert.read().clone();
-    let mut pomodoro = state.pomodoro.read().clone();
+    let settings = state::SETTINGS.cloned();
+    let mut alert = state::ALERT.cloned();
+    let mut pomodoro = state::POMODORO.cloned();
 
     pomodoro.snoozed = false;
     stop_timer(Local::now());
     alert.is_shown = false;
-    state.alert.set(alert);
+    *state::ALERT.write() = alert;
     pomodoro.sessions = 0;
-    state.pomodoro.set(pomodoro);
+    *state::POMODORO.write() = pomodoro;
     update_task_history(settings.days_to_show);
     // TODO: Test if this updates state (i.e. if it loads a new task we didn't have):
     spawn(async move {
@@ -265,19 +255,18 @@ fn stop_pomodoro_timer() {
 }
 
 fn start_break() {
-    let mut state = use_context::<state::FurState>();
-    let settings = state.settings.read().clone();
-    let mut alert = state.alert.read().clone();
-    let mut pomodoro = state.pomodoro.read().clone();
+    let settings = state::SETTINGS.cloned();
+    let mut alert = state::ALERT.cloned();
+    let mut pomodoro = state::POMODORO.cloned();
 
     let original_task_input = state::TASK_INPUT.cloned();
     pomodoro.on_break = true;
     pomodoro.snoozed = false;
-    state.pomodoro.set(pomodoro);
+    *state::POMODORO.write() = pomodoro;
     stop_timer(Local::now());
     *state::TASK_INPUT.write() = original_task_input;
     alert.is_shown = false;
-    state.alert.set(alert);
+    *state::ALERT.write() = alert;
     start_timer();
     update_task_history(settings.days_to_show);
     // TODO: Test if this updates state (i.e. if it loads a new task we didn't have):
@@ -287,36 +276,34 @@ fn start_break() {
 }
 
 fn stop_after_break() {
-    let mut state = use_context::<state::FurState>();
-    let settings = state.settings.read().clone();
-    let mut alert = state.alert.read().clone();
-    let mut pomodoro = state.pomodoro.read().clone();
+    let settings = state::SETTINGS.cloned();
+    let mut alert = state::ALERT.cloned();
+    let mut pomodoro = state::POMODORO.cloned();
     *state::TIMER_IS_RUNNING.write() = false;
     pomodoro.on_break = false;
     pomodoro.snoozed = false;
     pomodoro.sessions = 0;
-    state.pomodoro.set(pomodoro);
+    *state::POMODORO.write() = pomodoro;
     reset_timer();
     alert.is_shown = false;
-    state.alert.set(alert);
+    *state::ALERT.write() = alert;
     update_task_history(settings.days_to_show);
 }
 
 fn continue_after_break() {
-    let mut state = use_context::<state::FurState>();
-    let settings = state.settings.read().clone();
-    let mut alert = state.alert.read().clone();
-    let mut pomodoro = state.pomodoro.read().clone();
+    let settings = state::SETTINGS.cloned();
+    let mut alert = state::ALERT.cloned();
+    let mut pomodoro = state::POMODORO.cloned();
 
     *state::TIMER_IS_RUNNING.write() = false;
     let original_task_input = state::TASK_INPUT.cloned();
     pomodoro.on_break = false;
     pomodoro.snoozed = false;
-    state.pomodoro.set(pomodoro);
+    *state::POMODORO.write() = pomodoro;
     reset_timer();
     *state::TASK_INPUT.write() = original_task_input;
     alert.is_shown = false;
-    state.alert.set(alert);
+    *state::ALERT.write() = alert;
     start_timer();
     update_task_history(settings.days_to_show);
     sync_after_change();

@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use chrono::Local;
-use dioxus::{hooks::use_context, signals::Readable};
+use dioxus::signals::Readable;
 
 use crate::{state, NavTab};
 
@@ -43,12 +43,7 @@ pub fn start_stop_pressed() {
         //     self.pomodoro.sessions = 0;
         timer::stop_timer(Local::now());
 
-        task_history::update_task_history(
-            use_context::<state::FurState>()
-                .settings
-                .read()
-                .days_to_show,
-        );
+        task_history::update_task_history(state::SETTINGS.read().days_to_show);
 
         sync_after_change();
         // }

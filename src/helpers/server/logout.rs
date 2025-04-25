@@ -14,11 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use dioxus::{
-    hooks::use_context,
-    prelude::spawn,
-    signals::{Readable, Writable},
-};
+use dioxus::{prelude::spawn, signals::Readable};
 use reqwest::Client;
 use serde::Serialize;
 
@@ -36,8 +32,7 @@ pub struct LogoutRequest {
 }
 
 pub fn logout_button_pressed() {
-    let state = use_context::<state::FurState>();
-    let user_clone = state.user.read().clone();
+    let user_clone = state::USER.cloned();
     if let Some(user) = user_clone {
         spawn(async move {
             server_logout(&user).await;
@@ -68,10 +63,8 @@ pub async fn server_logout(user: &FurUser) {
 }
 
 pub fn logout_complete() {
-    let mut state = use_context::<state::FurState>();
-
     reset_user();
-    state.user_fields.set(FurUserFields::default());
+    *state::USER_FIELDS.write() = FurUserFields::default();
     // TODO: Set message
     // return messages::set_positive_temp_notice(
     //     &mut self.login_message,

@@ -16,7 +16,6 @@
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct FurShortcut {

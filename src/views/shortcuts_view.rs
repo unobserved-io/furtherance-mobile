@@ -40,7 +40,7 @@ use crate::{
 
 #[component]
 pub fn ShortcutsView() -> Element {
-    let sheets = use_context::<state::FurState>().sheets.read().clone();
+    let sheets = state::SHEETS.cloned();
     let edit_mode = use_signal(|| false);
 
     rsx! {
@@ -50,7 +50,7 @@ pub fn ShortcutsView() -> Element {
         TopButtons { edit_mode }
 
         div { id: "shortcuts",
-            for shortcut in use_context::<state::FurState>().shortcuts.read().iter() {
+            for shortcut in state::SHORTCUTS.read().iter() {
                 ShortcutItem { shortcut: shortcut.clone(), edit_mode }
             }
         }
@@ -86,10 +86,9 @@ pub fn TopButtons(edit_mode: Signal<bool>) -> Element {
                 button {
                     class: "no-bg-button",
                     onclick: move |_| {
-                        let mut state = use_context::<state::FurState>();
-                        let mut new_sheets = state.sheets.read().clone();
+                        let mut new_sheets = state::SHEETS.cloned();
                         new_sheets.new_shortcut_is_shown = true;
-                        state.sheets.set(new_sheets);
+                        *state::SHEETS.write() = new_sheets;
                     },
                     Icon { icon: BsPlusLg, width: 25, height: 25 }
                 }
@@ -116,14 +115,13 @@ pub fn ShortcutItem(shortcut: FurShortcut, edit_mode: Signal<bool>) -> Element {
     rsx! {
         button {
             class: if edit_mode.cloned()
-    && use_context::<state::FurState>().sheets.read().edit_shortcut_sheet.is_none() { "shortcut-bubble wiggle" } else { "shortcut-bubble" },
+    && state::SHEETS.read().edit_shortcut_sheet.is_none() { "shortcut-bubble wiggle" } else { "shortcut-bubble" },
             style: bg_color,
             onclick: move |_| {
                 if edit_mode.cloned() {
-                    let mut state = use_context::<state::FurState>();
-                    let mut new_sheets = state.sheets.read().clone();
+                    let mut new_sheets = state::SHEETS.cloned();
                     new_sheets.edit_shortcut_sheet = Some(shortcut_clone.clone());
-                    state.sheets.set(new_sheets);
+                    *state::SHEETS.write() = new_sheets;
                 } else {
                     actions::start_timer_with_task(shortcut.to_string())
                 };
@@ -182,10 +180,9 @@ fn NewShortcutSheet() -> Element {
                 onclick: move |_| {
                     task_input.set(String::new());
                     color_hex.set(random_color());
-                    let mut state = use_context::<state::FurState>();
-                    let mut new_sheets = state.sheets.read().clone();
+                    let mut new_sheets = state::SHEETS.cloned();
                     new_sheets.new_shortcut_is_shown = false;
-                    state.sheets.set(new_sheets);
+                    *state::SHEETS.write() = new_sheets;
                 },
                 "{cancel_text}"
             }
@@ -211,10 +208,9 @@ fn NewShortcutSheet() -> Element {
                             .expect("Couldn't write task to database.");
                         task_input.set(String::new());
                         color_hex.set(random_color());
-                        let mut state = use_context::<state::FurState>();
-                        let mut new_sheets = state.sheets.read().clone();
+                        let mut new_sheets = state::SHEETS.cloned();
                         new_sheets.new_shortcut_is_shown = false;
-                        state.sheets.set(new_sheets);
+                        *state::SHEETS.write() = new_sheets;
                         update_all_shortcuts();
                         sync_after_change();
                     }
@@ -249,27 +245,24 @@ fn EditShortcutSheet(shortcut: Option<FurShortcut>) -> Element {
                                             eprintln!("Failed to delete shortcut: {}", e);
                                         }
                                     }
-                                    let mut state = use_context::<state::FurState>();
-                                    let mut alert = state.alert.cloned();
-                                    let mut new_sheets = state.sheets.read().clone();
+                                    let mut alert = state::ALERT.cloned();
+                                    let mut new_sheets = state::SHEETS.cloned();
                                     new_sheets.edit_shortcut_sheet = None;
-                                    state.sheets.set(new_sheets);
+                                    *state::SHEETS.write() = new_sheets;
                                     *SHORTCUT_ID_TO_DELETE.write() = None;
                                     alert.close();
-                                    state.alert.set(alert.clone());
+                                    *state::ALERT.write() = alert.clone();
                                     update_all_shortcuts();
                                     sync_after_change();
                                 }
                                 fn close_alert() {
-                                    let mut state = use_context::<state::FurState>();
-                                    let mut alert = state.alert.cloned();
+                                    let mut alert = state::ALERT.cloned();
                                     *SHORTCUT_ID_TO_DELETE.write() = None;
                                     alert.close();
-                                    state.alert.set(alert.clone());
+                                    *state::ALERT.write() = alert.clone();
                                 }
-                                let mut state = use_context::<state::FurState>();
-                                let settings = state.settings.read().clone();
-                                let mut alert = state.alert.cloned();
+                                let settings = state::SETTINGS.cloned();
+                                let mut alert = state::ALERT.cloned();
                                 if settings.show_delete_confirmation {
                                     *SHORTCUT_ID_TO_DELETE.write() = Some(shortcut_clone_two.uid.clone());
                                     alert.is_shown = true;
@@ -277,17 +270,16 @@ fn EditShortcutSheet(shortcut: Option<FurShortcut>) -> Element {
                                     alert.message = loc!("delete-shortcut-description");
                                     alert.confirm_button = (loc!("delete"), || delete_shortcut());
                                     alert.cancel_button = Some((loc!("cancel"), || close_alert()));
-                                    state.alert.set(alert.clone());
+                                    *state::ALERT.write() = alert.clone();
                                 } else {
                                     if let Err(e) = database::shortcuts::delete_shortcut_by_id(
                                         &shortcut_clone_two.uid,
                                     ) {
                                         eprintln!("Failed to delete shortcut: {}", e);
                                     }
-                                    let mut state = use_context::<state::FurState>();
-                                    let mut new_sheets = state.sheets.read().clone();
+                                    let mut new_sheets = state::SHEETS.cloned();
                                     new_sheets.edit_shortcut_sheet = None;
-                                    state.sheets.set(new_sheets);
+                                    *state::SHEETS.write() = new_sheets;
                                     update_all_shortcuts();
                                     sync_after_change();
                                 }
@@ -323,10 +315,9 @@ fn EditShortcutSheet(shortcut: Option<FurShortcut>) -> Element {
                 button {
                     class: "sheet-cancel-button",
                     onclick: move |_| {
-                        let mut state = use_context::<state::FurState>();
-                        let mut new_sheets = state.sheets.read().clone();
+                        let mut new_sheets = state::SHEETS.cloned();
                         new_sheets.edit_shortcut_sheet = None;
-                        state.sheets.set(new_sheets);
+                        *state::SHEETS.write() = new_sheets;
                     },
                     {loc!("cancel")}
                 }
@@ -346,10 +337,9 @@ fn EditShortcutSheet(shortcut: Option<FurShortcut>) -> Element {
                             shortcut_clone.color_hex = color_hex.cloned();
                             database::shortcuts::update_shortcut(&shortcut_clone)
                                 .expect("Couldn't write task to database.");
-                            let mut state = use_context::<state::FurState>();
-                            let mut new_sheets = state.sheets.read().clone();
+                            let mut new_sheets = state::SHEETS.cloned();
                             new_sheets.edit_shortcut_sheet = None;
-                            state.sheets.set(new_sheets);
+                            *state::SHEETS.write() = new_sheets;
                             update_all_shortcuts();
                             sync_after_change();
                         }

@@ -15,18 +15,14 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use chrono::{Datelike, Local, NaiveDate, TimeDelta};
-use dioxus::{hooks::use_context, signals::Readable};
+use dioxus::signals::Readable;
 use itertools::Itertools;
 use regex::Regex;
 
 use crate::{loc, localization::Localization, state};
 
 pub fn seconds_to_formatted_duration(total_seconds: i64) -> String {
-    if use_context::<state::FurState>()
-        .settings
-        .cloned()
-        .show_seconds
-    {
+    if state::SETTINGS.cloned().show_seconds {
         seconds_to_hms(total_seconds)
     } else {
         seconds_to_hm(total_seconds)

@@ -21,9 +21,8 @@ use std::{
 };
 
 use dioxus::{
-    hooks::use_context,
-    prelude::{consume_context, spawn, spawn_forever},
-    signals::{Readable, Writable},
+    prelude::{spawn, spawn_forever},
+    signals::Readable,
 };
 use fluent::FluentValue;
 use reqwest::Client;
@@ -46,7 +45,7 @@ use crate::{
         fur_todo::{EncryptedTodo, FurTodo},
         fur_user::{FurUser, FurUserFields},
     },
-    state::{self, TIMER_IS_RUNNING},
+    state::{self},
 };
 
 use super::{
@@ -107,7 +106,7 @@ pub fn schedule_sync() {
     SYNC_INIT.call_once(|| {
         spawn(async move {
             loop {
-                if use_context::<state::FurState>().user.cloned().is_some() {
+                if state::USER.cloned().is_some() {
                     helpers::server::sync::request_sync();
                 }
                 tokio::time::sleep(Duration::from_secs(600)).await; // Sync every 10 minutes
@@ -118,13 +117,9 @@ pub fn schedule_sync() {
 
 pub fn request_sync() {
     println!("Syncing");
-    *TIMER_IS_RUNNING.write() = false;
-    println!("READ TIMER! {}", TIMER_IS_RUNNING);
-    let state = consume_context::<state::FurState>();
-    let settings = state.settings.read().clone();
-    println!("DOES IT GET HERE");
+    let settings = state::SETTINGS.cloned();
 
-    let user = match state.user.read().clone() {
+    let user = match state::USER.cloned() {
         Some(user) => user,
         None => {
             eprintln!("Please log in first");
@@ -303,12 +298,11 @@ pub async fn sync_with_server(
 }
 
 fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
-    let mut state = use_context::<state::FurState>();
-    let mut settings = state.settings.read().clone();
+    let mut settings = state::SETTINGS.cloned();
 
     match sync_result {
         (Ok(response), mut sync_count) => {
-            let user = match state.user.read().clone() {
+            let user = match state::USER.cloned() {
                 Some(user) => user,
                 None => {
                     eprintln!("Please log in first");
@@ -441,7 +435,7 @@ fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
 
             // Update last sync timestamp
             settings.last_sync = response.server_timestamp;
-            state.settings.set(settings.clone());
+            *state::SETTINGS.write() = settings.clone();
 
             // If the database_id changed, send all tasks, or if the server has orphaned tasks, re-sync those
             if !response.orphaned_tasks.is_empty()
@@ -546,7 +540,7 @@ fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
             }
 
             settings.needs_full_sync = false;
-            state.settings.set(settings.clone());
+            *state::SETTINGS.write() = settings.clone();
 
             // TODO: Check if these are updated since they run async
             spawn(async move {
@@ -561,15 +555,15 @@ fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
         }
         (Err(ApiError::TokenRefresh(msg)), _) if msg == "Failed to refresh token" => {
             eprintln!("Sync error. Credentials have changed. Log in again.");
-            if let Some(user) = state.user.read().clone() {
+            if let Some(user) = state::USER.cloned() {
                 spawn(async move {
                     logout::server_logout(&user).await;
                     match database::sync::delete_all_credentials() {
                         Ok(_) => {}
                         Err(e) => eprintln!("Error deleting user credentials: {}", e),
                     };
-                    state.user.set(None);
-                    state.user_fields.set(FurUserFields::default());
+                    *state::USER.write() = None;
+                    *state::USER_FIELDS.write() = FurUserFields::default();
                     set_negative_sync_message(loc!("reauthenticate-error"));
                 });
             }
@@ -586,7 +580,7 @@ fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
 }
 
 pub fn sync_after_change() {
-    if consume_context::<state::FurState>().user.read().is_some() {
+    if state::USER.read().is_some() {
         println!("Sync after change");
         spawn_forever(async move {
             // Small delay to allow any pending DB operations to complete
@@ -602,14 +596,12 @@ pub fn reset_user() {
         Ok(_) => {}
         Err(e) => eprintln!("Error deleting user credentials: {}", e),
     };
-    use_context::<state::FurState>().user.set(None);
+    *state::USER.write() = None;
 }
 
 pub fn set_positive_sync_messsage(message: String) {
     spawn(async {
-        use_context::<state::FurState>()
-            .sync_message
-            .set(Ok(message));
+        *state::SYNC_MESSAGE.write() = Ok(message);
         tokio::time::sleep(std::time::Duration::from_secs(SETTINGS_MESSAGE_DURATION)).await;
         clear_sync_message();
     });
@@ -617,22 +609,18 @@ pub fn set_positive_sync_messsage(message: String) {
 
 pub fn set_negative_sync_message(message: String) {
     spawn(async {
-        use_context::<state::FurState>()
-            .sync_message
-            .set(Err(message.into()));
+        *state::SYNC_MESSAGE.write() = Err(message.into());
         tokio::time::sleep(std::time::Duration::from_secs(SETTINGS_MESSAGE_DURATION)).await;
         clear_sync_message();
     });
 }
 
 pub fn clear_sync_message() {
-    let mut state = use_context::<state::FurState>();
-    if state
-        .sync_message
+    if state::SYNC_MESSAGE
         .read()
         .iter()
         .any(|message| message != &loc!("syncing"))
     {
-        state.sync_message.set(Ok(String::new()));
+        *state::SYNC_MESSAGE.write() = Ok(String::new());
     }
 }

@@ -49,7 +49,7 @@ static TIME_FORMAT: &str = "%H:%M";
 
 #[component]
 pub fn TimerView() -> Element {
-    let sheets = use_context::<state::FurState>().sheets.read().clone();
+    let sheets = state::SHEETS.cloned();
 
     // Show pomodoro starting time if timer is not running
     // Must be async to prevent possible infinite loop
@@ -104,10 +104,9 @@ pub fn AddNewTask() -> Element {
             button {
                 class: "no-bg-button",
                 onclick: move |_| {
-                    let mut state = use_context::<state::FurState>();
-                    let mut new_sheets = state.sheets.read().clone();
+                    let mut new_sheets = state::SHEETS.cloned();
                     new_sheets.new_task_is_shown = true;
-                    state.sheets.set(new_sheets);
+                    *state::SHEETS.write() = new_sheets;
                 },
                 Icon { icon: BsPlus, width: 40, height: 40 }
             }
@@ -168,7 +167,7 @@ pub fn TaskInput() -> Element {
 pub fn TaskHistory() -> Element {
     rsx! {
         div { id: "task-history",
-            for (date , task_groups) in use_context::<state::FurState>().tasks.read().iter().rev() {
+            for (date , task_groups) in state::TASKS.read().iter().rev() {
                 HistoryTitleRow { date: date.clone(), task_groups: task_groups.clone() }
                 for task_group in task_groups {
                     HistoryGroupContainer { task_group: task_group.clone() }
@@ -199,10 +198,10 @@ pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Eleme
     rsx! {
         div { id: "history-title-row",
             p { class: "bold", "{formatted_date}" }
-            if use_context::<state::FurState>().settings.read().show_daily_time_total {
+            if state::SETTINGS.read().show_daily_time_total {
                 div { class: "daily-totals",
                     p { class: "bold", "{total_time_str}" }
-                    if use_context::<state::FurState>().settings.read().show_task_earnings
+                    if state::SETTINGS.read().show_task_earnings
                         && total_earnings > 0.0
                     {
                         p { "{total_earnings_str}" }
@@ -224,13 +223,13 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
         div {
             class: "task-bubble",
             onclick: move |_| {
-                let mut new_sheet = use_context::<state::FurState>().sheets.cloned();
+                let mut new_sheet = state::SHEETS.cloned();
                 if number_of_tasks == 1 {
                     new_sheet.task_edit_sheet = Some(task_group.tasks.first().unwrap().clone());
                 } else {
                     new_sheet.group_details_sheet = Some(task_group.clone());
                 }
-                use_context::<state::FurState>().sheets.set(new_sheet);
+                *state::SHEETS.write() = new_sheet;
             },
 
             if number_of_tasks > 1 {
@@ -239,12 +238,12 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
 
             div { class: "task-bubble-middle",
                 p { class: "bold", "{task_group.name}" }
-                if use_context::<state::FurState>().settings.read().show_task_project
+                if state::SETTINGS.read().show_task_project
                     && !task_group.project.is_empty()
                 {
                     p { class: "task-details", "@{task_group.project}" }
                 }
-                if use_context::<state::FurState>().settings.read().show_task_tags
+                if state::SETTINGS.read().show_task_tags
                     && !task_group.tags.is_empty()
                 {
                     p { class: "task-details", "#{task_group.tags}" }
@@ -253,7 +252,7 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
 
             div { class: "task-bubble-right",
                 p { class: "bold", "{total_time_str}" }
-                if use_context::<state::FurState>().settings.read().show_task_earnings
+                if state::SETTINGS.read().show_task_earnings
                     && task_group.rate > 0.0
                 {
                     p { "{total_earnings_str}" }
@@ -342,10 +341,9 @@ fn NewTaskSheet() -> Element {
                     task_input.set(String::new());
                     start_time.set(one_hour_ago.format(DATE_TIME_FORMAT).to_string());
                     stop_time.set(Local::now().format(DATE_TIME_FORMAT).to_string());
-                    let mut state = use_context::<state::FurState>();
-                    let mut new_sheets = state.sheets.read().clone();
+                    let mut new_sheets = state::SHEETS.cloned();
                     new_sheets.new_task_is_shown = false;
-                    state.sheets.set(new_sheets);
+                    *state::SHEETS.write() = new_sheets;
                 },
                 "{cancel_text}"
             }
@@ -379,12 +377,11 @@ fn NewTaskSheet() -> Element {
                                 task_input.set(String::new());
                                 start_time.set(one_hour_ago.format(DATE_TIME_FORMAT).to_string());
                                 stop_time.set(Local::now().format(DATE_TIME_FORMAT).to_string());
-                                let mut state = use_context::<state::FurState>();
-                                let mut new_sheets = state.sheets.read().clone();
+                                let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.new_task_is_shown = false;
-                                state.sheets.set(new_sheets);
+                                *state::SHEETS.write() = new_sheets;
                                 task_history::update_task_history(
-                                    use_context::<state::FurState>().settings.read().days_to_show,
+                                    state::SETTINGS.read().days_to_show,
                                 );
                                 sync_after_change();
                             }
@@ -402,8 +399,7 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
     let task_group_clone = task_group.clone();
     let task_group_clone_two = task_group.clone();
     let task_group_clone_three = task_group.clone();
-    let mut state = use_context::<state::FurState>();
-    let mut alert = state.alert.cloned();
+    let mut alert = state::ALERT.cloned();
 
     rsx! {
         if let Some(group) = task_group {
@@ -414,10 +410,9 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                         button {
                             class: "no-bg-button",
                             onclick: move |_| {
-                                let mut state = use_context::<state::FurState>();
-                                let mut new_sheets = state.sheets.read().clone();
+                                let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.add_to_group_sheet = task_group_clone.clone();
-                                state.sheets.set(new_sheets);
+                                *state::SHEETS.write() = new_sheets;
                             },
                             Icon { icon: BsPlusLg, width: 25, height: 25 }
                         }
@@ -425,10 +420,9 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                         button {
                             class: "no-bg-button",
                             onclick: move |_| {
-                                let mut state = use_context::<state::FurState>();
-                                let mut new_sheets = state.sheets.read().clone();
+                                let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.edit_group_sheet = task_group_clone_two.clone();
-                                state.sheets.set(new_sheets);
+                                *state::SHEETS.write() = new_sheets;
                             },
                             Icon { icon: BsPencil, width: 25, height: 25 }
                         }
@@ -442,28 +436,26 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                             eprintln!("Failed to delete tasks: {}", e);
                                         }
                                     }
-                                    let mut state = use_context::<state::FurState>();
-                                    let mut alert = state.alert.cloned();
-                                    let mut new_sheets = state.sheets.read().clone();
+                                    let mut alert = state::ALERT.cloned();
+                                    let mut new_sheets = state::SHEETS.cloned();
                                     new_sheets.group_details_sheet = None;
-                                    state.sheets.set(new_sheets);
+                                    *state::SHEETS.write() = new_sheets;
                                     *TASK_IDS_TO_DELETE.write() = None;
                                     alert.close();
-                                    state.alert.set(alert.clone());
+                                    *state::ALERT.write() = alert.clone();
                                     task_history::update_task_history(
-                                        use_context::<state::FurState>().settings.read().days_to_show,
+                                        state::SETTINGS.read().days_to_show,
                                     );
                                     sync_after_change();
                                 }
                                 fn close_alert() {
-                                    let mut state = use_context::<state::FurState>();
-                                    let mut alert = state.alert.cloned();
+                                    let mut alert = state::ALERT.cloned();
                                     *TASK_IDS_TO_DELETE.write() = None;
                                     alert.close();
-                                    state.alert.set(alert.clone());
+                                    *state::ALERT.write() = alert.clone();
                                 }
                                 if let Some(task_group) = task_group_clone_three.clone() {
-                                    let settings = state.settings.read().clone();
+                                    let settings = state::SETTINGS.cloned();
                                     if settings.show_delete_confirmation {
                                         *TASK_IDS_TO_DELETE.write() = Some(task_group.all_task_ids());
                                         alert.is_shown = true;
@@ -471,19 +463,18 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                         alert.message = loc!("delete-all-description");
                                         alert.confirm_button = (loc!("delete-all"), || delete_whole_group());
                                         alert.cancel_button = Some((loc!("cancel"), || close_alert()));
-                                        state.alert.set(alert.clone());
+                                        *state::ALERT.write() = alert.clone();
                                     } else {
                                         if let Err(e) = database::tasks::delete_tasks_by_ids(
                                             &task_group.all_task_ids(),
                                         ) {
                                             eprintln!("Failed to delete tasks: {}", e);
                                         }
-                                        let mut state = use_context::<state::FurState>();
-                                        let mut new_sheets = state.sheets.read().clone();
+                                        let mut new_sheets = state::SHEETS.cloned();
                                         new_sheets.group_details_sheet = None;
-                                        state.sheets.set(new_sheets);
+                                        *state::SHEETS.write() = new_sheets;
                                         task_history::update_task_history(
-                                            use_context::<state::FurState>().settings.read().days_to_show,
+                                            state::SETTINGS.read().days_to_show,
                                         );
                                         sync_after_change();
                                     }
@@ -496,10 +487,9 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                         button {
                             class: "close-sheet-button",
                             onclick: move |_| {
-                                let mut state = use_context::<state::FurState>();
-                                let mut new_sheets = state.sheets.read().clone();
+                                let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.group_details_sheet = None;
-                                state.sheets.set(new_sheets);
+                                *state::SHEETS.write() = new_sheets;
                             },
                             Icon { icon: BsXLg, width: 25, height: 25 }
                         }
@@ -521,9 +511,9 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                     div {
                         class: "edit-task-bubble",
                         onclick: move |_| {
-                            let mut new_sheet = use_context::<state::FurState>().sheets.cloned();
+                            let mut new_sheet = state::SHEETS.cloned();
                             new_sheet.task_edit_sheet = Some(task.clone());
-                            use_context::<state::FurState>().sheets.set(new_sheet);
+                            *state::SHEETS.write() = new_sheet;
                         },
 
                         p { class: "bold", "{get_start_to_stop_string(&task)}" }
@@ -560,29 +550,26 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                                         eprintln!("Failed to delete task: {}", e);
                                     }
                                 }
-                                let mut state = use_context::<state::FurState>();
-                                let mut alert = state.alert.cloned();
-                                let mut new_sheets = state.sheets.read().clone();
+                                let mut alert = state::ALERT.cloned();
+                                let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.task_edit_sheet = None;
-                                state.sheets.set(new_sheets);
+                                *state::SHEETS.write() = new_sheets;
                                 *TASK_IDS_TO_DELETE.write() = None;
                                 alert.close();
-                                state.alert.set(alert.clone());
+                                *state::ALERT.write() = alert.clone();
                                 task_history::update_task_history(
-                                    use_context::<state::FurState>().settings.read().days_to_show,
+                                    state::SETTINGS.read().days_to_show,
                                 );
                                 sync_after_change();
                             }
                             fn close_alert() {
-                                let mut state = use_context::<state::FurState>();
-                                let mut alert = state.alert.cloned();
+                                let mut alert = state::ALERT.cloned();
                                 *TASK_IDS_TO_DELETE.write() = None;
                                 alert.close();
-                                state.alert.set(alert.clone());
+                                *state::ALERT.write() = alert.clone();
                             }
-                            let mut state = use_context::<state::FurState>();
-                            let mut alert = state.alert.cloned();
-                            let settings = state.settings.read().clone();
+                            let mut alert = state::ALERT.cloned();
+                            let settings = state::SETTINGS.cloned();
                             if settings.show_delete_confirmation {
                                 *TASK_IDS_TO_DELETE.write() = Some(task_uid_vec.clone());
                                 alert.is_shown = true;
@@ -590,17 +577,16 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                                 alert.message = loc!("delete-task-description");
                                 alert.confirm_button = (loc!("delete"), || delete_task());
                                 alert.cancel_button = Some((loc!("cancel"), || close_alert()));
-                                state.alert.set(alert.clone());
+                                *state::ALERT.write() = alert.clone();
                             } else {
                                 if let Err(e) = database::tasks::delete_tasks_by_ids(&task_uid_vec) {
                                     eprintln!("Failed to delete task: {}", e);
                                 }
-                                let mut state = use_context::<state::FurState>();
-                                let mut new_sheets = state.sheets.read().clone();
+                                let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.task_edit_sheet = None;
-                                state.sheets.set(new_sheets);
+                                *state::SHEETS.write() = new_sheets;
                                 task_history::update_task_history(
-                                    use_context::<state::FurState>().settings.read().days_to_show,
+                                    state::SETTINGS.read().days_to_show,
                                 );
                                 sync_after_change();
                             }
@@ -672,60 +658,57 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                 button {
                     class: "sheet-cancel-button",
                     onclick: move |_| {
-                        let mut state = use_context::<state::FurState>();
-                        let mut new_sheets = state.sheets.read().clone();
+                        let mut new_sheets = state::SHEETS.cloned();
                         new_sheets.task_edit_sheet = None;
-                        state.sheets.set(new_sheets);
+                        *state::SHEETS.write() = new_sheets;
                     },
                     {loc!("cancel")}
                 }
                 button {
                     class: "sheet-primary-button",
                     onclick: move |event| {
-                           if task_input.read().trim().is_empty() {
-                                event.prevent_default();
-                            } else {
-                                if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
-                                    &start_time.cloned(),
+                        if task_input.read().trim().is_empty() {
+                            event.prevent_default();
+                        } else {
+                            if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                                &start_time.cloned(),
+                            ) {
+                                if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                                    &stop_time.cloned(),
                                 ) {
-                                    if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
-                                        &stop_time.cloned(),
-                                    ) {
-                                        let (name, project, tags, rate) = formatters::split_task_input(
-                                            &task_input.cloned(),
-                                        );
-                                        if name != task.name || project != task.project
-                                            || tags != task.tags || rate != task.rate
-                                            || parsed_start_time != task.start_time
-                                            || parsed_stop_time != task.stop_time
-                                        {
-                                            database::tasks::update_task(
-                                                    &FurTask {
-                                                        name,
-                                                        start_time: parsed_start_time,
-                                                        stop_time: parsed_stop_time,
-                                                        tags,
-                                                        project,
-                                                        rate,
-                                                        currency: task_currency.clone(),
-                                                        uid: task_uid.clone(),
-                                                        is_deleted: task.is_deleted,
-                                                        last_updated: chrono::Utc::now().timestamp(),
-                                                    },
-                                                )
-                                                .expect("Couldn't update task in database.");
-                                        }
-                                        task_history::update_task_history(
-                                            use_context::<state::FurState>().settings.read().days_to_show,
-                                        );
-                                        sync_after_change();
-                                        let mut state = use_context::<state::FurState>();
-                                        let mut new_sheets = state.sheets.read().clone();
-                                        new_sheets.group_details_sheet = None;
-                                        new_sheets.task_edit_sheet = None;
-                                        state.sheets.set(new_sheets);
+                                    let (name, project, tags, rate) = formatters::split_task_input(
+                                        &task_input.cloned(),
+                                    );
+                                    if name != task.name || project != task.project || tags != task.tags
+                                        || rate != task.rate || parsed_start_time != task.start_time
+                                        || parsed_stop_time != task.stop_time
+                                    {
+                                        database::tasks::update_task(
+                                                &FurTask {
+                                                    name,
+                                                    start_time: parsed_start_time,
+                                                    stop_time: parsed_stop_time,
+                                                    tags,
+                                                    project,
+                                                    rate,
+                                                    currency: task_currency.clone(),
+                                                    uid: task_uid.clone(),
+                                                    is_deleted: task.is_deleted,
+                                                    last_updated: chrono::Utc::now().timestamp(),
+                                                },
+                                            )
+                                            .expect("Couldn't update task in database.");
                                     }
+                                    task_history::update_task_history(
+                                        state::SETTINGS.read().days_to_show,
+                                    );
+                                    sync_after_change();
+                                    let mut new_sheets = state::SHEETS.cloned();
+                                    new_sheets.group_details_sheet = None;
+                                    new_sheets.task_edit_sheet = None;
+                                    *state::SHEETS.write() = new_sheets;
                                 }
+                            }
                         }
                     },
                     {loc!("save")}
@@ -813,10 +796,9 @@ fn AddToGroupSheet(group: Option<FurTaskGroup>) -> Element {
                 button {
                     class: "sheet-cancel-button",
                     onclick: move |_| {
-                        let mut state = use_context::<state::FurState>();
-                        let mut new_sheets = state.sheets.read().clone();
+                        let mut new_sheets = state::SHEETS.cloned();
                         new_sheets.add_to_group_sheet = None;
-                        state.sheets.set(new_sheets);
+                        *state::SHEETS.write() = new_sheets;
                     },
                     {loc!("cancel")}
                 }
@@ -845,13 +827,12 @@ fn AddToGroupSheet(group: Option<FurTaskGroup>) -> Element {
                                 ) {
                                     eprintln!("Error inserting task into database: {}", e);
                                 }
-                                let mut state = use_context::<state::FurState>();
-                                let mut new_sheets = state.sheets.read().clone();
+                                let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.group_details_sheet = None;
                                 new_sheets.add_to_group_sheet = None;
-                                state.sheets.set(new_sheets);
+                                *state::SHEETS.write() = new_sheets;
                                 task_history::update_task_history(
-                                    use_context::<state::FurState>().settings.read().days_to_show,
+                                    state::SETTINGS.read().days_to_show,
                                 );
                                 sync_after_change();
                             }
@@ -889,10 +870,9 @@ fn EditGroupSheet(group: Option<FurTaskGroup>) -> Element {
                 button {
                     class: "sheet-cancel-button",
                     onclick: move |_| {
-                        let mut state = use_context::<state::FurState>();
-                        let mut new_sheets = state.sheets.read().clone();
+                        let mut new_sheets = state::SHEETS.cloned();
                         new_sheets.edit_group_sheet = None;
-                        state.sheets.set(new_sheets);
+                        *state::SHEETS.write() = new_sheets;
                     },
                     {loc!("cancel")}
                 }
@@ -910,13 +890,12 @@ fn EditGroupSheet(group: Option<FurTaskGroup>) -> Element {
                         if let Err(e) = database::tasks::update_group_of_tasks(&new_group) {
                             eprintln!("Error updating task group in database: {}", e);
                         }
-                        let mut state = use_context::<state::FurState>();
-                        let mut new_sheets = state.sheets.read().clone();
+                        let mut new_sheets = state::SHEETS.cloned();
                         new_sheets.group_details_sheet = None;
                         new_sheets.edit_group_sheet = None;
-                        state.sheets.set(new_sheets);
+                        *state::SHEETS.write() = new_sheets;
                         task_history::update_task_history(
-                            use_context::<state::FurState>().settings.read().days_to_show,
+                            state::SETTINGS.read().days_to_show,
                         );
                         sync_after_change();
                     },

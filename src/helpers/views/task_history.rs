@@ -17,10 +17,7 @@
 use std::collections::BTreeMap;
 
 use chrono::Local;
-use dioxus::{
-    hooks::use_context,
-    signals::{Readable, Writable},
-};
+use dioxus::signals::Readable;
 
 use crate::{
     database::{
@@ -78,17 +75,15 @@ fn group_tasks_by_date(tasks: Vec<FurTask>) -> BTreeMap<chrono::NaiveDate, Vec<F
 }
 
 pub fn update_task_history(days_to_show: i64) {
-    let mut state = use_context::<state::FurState>();
     let task_history = get_task_history(days_to_show);
-    state.tasks.set(task_history.clone());
+    *state::TASKS.write() = task_history.clone();
     update_todos_after_refresh(days_to_show);
 }
 
 pub fn update_todos_after_refresh(days_to_show: i64) {
     let today = Local::now().date_naive();
     let task_history = get_task_history(days_to_show);
-    let mut state = use_context::<state::FurState>();
-    let mut new_todos = state.todos.cloned();
+    let mut new_todos = state::TODOS.cloned();
 
     if let Some(todays_todos) = new_todos.get_mut(&today) {
         if let Some(todays_tasks) = task_history.get(&today) {
@@ -106,7 +101,7 @@ pub fn update_todos_after_refresh(days_to_show: i64) {
                 }
             }
 
-            state.todos.set(new_todos)
+            *state::TODOS.write() = new_todos;
         }
     };
 }

@@ -93,7 +93,6 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    state::use_state_provider();
     match database::persistence::retrieve_persisting_timer() {
         Ok(persisting_timer) => {
             if persisting_timer.is_running {
@@ -107,9 +106,8 @@ fn App() -> Element {
     ensure_timer_running();
     schedule_sync();
 
-    let state = use_context::<state::FurState>();
-    let alert = state.alert.read().clone();
-    let sheets = state.sheets.read().clone();
+    let alert = state::ALERT.cloned();
+    let sheets = state::SHEETS.cloned();
 
     rsx! {
         document::Link { rel: "icon", href: FAVICON }

@@ -16,15 +16,11 @@
 
 use std::sync::Arc;
 
-use dioxus::{
-    hooks::use_context,
-    prelude::spawn,
-    signals::{Readable, Writable},
-};
+use dioxus::{prelude::spawn, signals::Readable};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::{database, helpers::server::sync::reset_user, models::fur_user::FurUserFields, state};
+use crate::{database, helpers::server::sync::reset_user, state};
 
 use super::encryption::{self, generate_device_id};
 
@@ -63,12 +59,11 @@ struct RefreshResponse {
 }
 
 pub fn login_button_pressed() {
-    let mut state = use_context::<state::FurState>();
-    let mut user_fields = state.user_fields.read().clone();
+    let mut user_fields = state::USER_FIELDS.cloned();
     user_fields.server = user_fields.server.clone().trim_end_matches('/').to_string();
-    state.user_fields.set(user_fields);
+    *state::USER_FIELDS.write() = user_fields;
 
-    let user_fields = state.user_fields.read().clone();
+    let user_fields = state::USER_FIELDS.cloned();
     let email = user_fields.email.clone();
     let encryption_key = user_fields.encryption_key.clone();
     let server = user_fields.server.clone();
@@ -115,33 +110,32 @@ pub async fn login(
 }
 
 fn complete_login(response_result: Result<LoginResponse, ApiError>) {
-    let mut state = use_context::<state::FurState>();
     match response_result {
         Ok(response) => {
             // Encrypt encryption key with device-specific key
-            let (encrypted_key, key_nonce) = match encryption::encrypt_encryption_key(
-                &state.user_fields.read().encryption_key,
-            ) {
-                Ok(result) => result,
-                Err(e) => {
-                    eprintln!("Error encrypting key: {:?}", e);
-                    match database::sync::delete_all_credentials() {
-                        Ok(_) => {}
-                        Err(e) => eprintln!("Error deleting user credentials: {}", e),
-                    };
-                    state.user.set(None);
-                    // TODO: Error message
-                    // return messages::set_negative_temp_notice(
-                    //     &mut self.login_message,
-                    //     self.localization
-                    //         .get_message("error-storing-credentials", None),
-                    // );
-                    return;
-                }
-            };
+            let (encrypted_key, key_nonce) =
+                match encryption::encrypt_encryption_key(&state::USER_FIELDS.read().encryption_key)
+                {
+                    Ok(result) => result,
+                    Err(e) => {
+                        eprintln!("Error encrypting key: {:?}", e);
+                        match database::sync::delete_all_credentials() {
+                            Ok(_) => {}
+                            Err(e) => eprintln!("Error deleting user credentials: {}", e),
+                        };
+                        *state::USER.write() = None;
+                        // TODO: Error message
+                        // return messages::set_negative_temp_notice(
+                        //     &mut self.login_message,
+                        //     self.localization
+                        //         .get_message("error-storing-credentials", None),
+                        // );
+                        return;
+                    }
+                };
 
             // Store credentials
-            let user_fields_clone = state.user_fields.read().clone();
+            let user_fields_clone = state::USER_FIELDS.cloned();
             if let Err(e) = database::sync::store_credentials(
                 &user_fields_clone.email,
                 &encrypted_key,
@@ -162,17 +156,17 @@ fn complete_login(response_result: Result<LoginResponse, ApiError>) {
             }
 
             // Always do a full sync after login
-            let mut settings_clone = state.settings.read().clone();
+            let mut settings_clone = state::SETTINGS.cloned();
             match settings_clone.change_needs_full_sync(&true) {
-                Ok(_) => state.settings.set(settings_clone),
+                Ok(_) => *state::SETTINGS.write() = settings_clone,
                 Err(e) => eprintln!("Error changing needs_full_sync: {}", e),
             };
 
-            let key_length = state.user_fields.read().encryption_key.len();
+            let key_length = state::USER_FIELDS.read().encryption_key.len();
 
             // Load new user credentials from database
             match database::sync::retrieve_credentials() {
-                Ok(optional_user) => state.user.set(optional_user),
+                Ok(optional_user) => *state::USER.write() = optional_user,
                 Err(e) => {
                     eprintln!("Error retrieving user credentials from database: {}", e);
                     reset_user();
@@ -186,12 +180,12 @@ fn complete_login(response_result: Result<LoginResponse, ApiError>) {
                 }
             };
 
-            if let Some(user) = state.user.read().clone() {
-                let mut user_fields_clone = state.user_fields.read().clone();
+            if let Some(user) = state::USER.cloned() {
+                let mut user_fields_clone = state::USER_FIELDS.cloned();
                 user_fields_clone.email = user.email;
                 user_fields_clone.encryption_key = "x".repeat(key_length);
                 user_fields_clone.server = user.server;
-                state.user_fields.set(user_fields_clone);
+                *state::USER_FIELDS.write() = user_fields_clone;
 
                 // TODO: Complete message
                 // tasks.push(messages::set_positive_temp_notice(

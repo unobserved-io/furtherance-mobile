@@ -17,12 +17,11 @@
 use std::collections::BTreeMap;
 
 use chrono::{Local, TimeDelta};
-use dioxus::{hooks::use_context, signals::Writable};
 
 use crate::{database, models::fur_todo::FurTodo, state};
 
 pub fn update_all_todos() {
-    use_context::<state::FurState>().todos.set(get_all_todos());
+    *state::TODOS.write() = get_all_todos();
 }
 
 pub fn get_all_todos() -> BTreeMap<chrono::NaiveDate, Vec<FurTodo>> {

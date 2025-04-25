@@ -14,14 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use dioxus::{hooks::use_context, signals::Writable};
-
 use crate::{database, models::fur_shortcut::FurShortcut, state};
 
 pub fn update_all_shortcuts() {
-    use_context::<state::FurState>()
-        .shortcuts
-        .set(get_all_shortcuts());
+    *state::SHORTCUTS.write() = get_all_shortcuts();
 }
 
 pub fn get_all_shortcuts() -> Vec<FurShortcut> {

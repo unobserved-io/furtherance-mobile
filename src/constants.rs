@@ -14,12 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::sync::Mutex;
-
 use dioxus::prelude::{asset, manganis, Asset};
-use once_cell::sync::{Lazy, OnceCell};
+use once_cell::sync::OnceCell;
 
-use crate::{localization::Localization, models::fur_settings::FurSettings};
+use crate::localization::Localization;
 
 pub const ALLOWED_DB_EXTENSIONS: &[&str] =
     &["db", "sqlite", "sqlite3", "db3", "database", "data", "s3db"];

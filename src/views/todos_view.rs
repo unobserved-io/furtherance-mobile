@@ -39,7 +39,7 @@ static CHECK_BOX_SIZE: u32 = 14;
 
 #[component]
 pub fn TodosView() -> Element {
-    let sheets = use_context::<state::FurState>().sheets.read().clone();
+    let sheets = state::SHEETS.cloned();
 
     rsx! {
 
@@ -48,7 +48,7 @@ pub fn TodosView() -> Element {
         AddNewTodo {}
 
         div { id: "todo-list",
-            for (date , todos) in use_context::<state::FurState>().todos.read().iter().rev() {
+            for (date , todos) in state::TODOS.read().iter().rev() {
                 TodoTitleRow { date: date.clone() }
                 for todo in todos {
                     TodoListItem { todo: todo.clone() }
@@ -79,10 +79,9 @@ pub fn AddNewTodo() -> Element {
             button {
                 class: "no-bg-button",
                 onclick: move |_| {
-                    let mut state = use_context::<state::FurState>();
-                    let mut new_sheets = state.sheets.read().clone();
+                    let mut new_sheets = state::SHEETS.cloned();
                     new_sheets.new_todo_is_shown = true;
-                    state.sheets.set(new_sheets);
+                    *state::SHEETS.write() = new_sheets;
                 },
                 Icon { icon: BsPlus, width: 40, height: 40 }
             }
@@ -137,26 +136,26 @@ fn TodoListItem(todo: FurTodo) -> Element {
             div {
                 class: "todo-text",
                 onclick: move |_| {
-                    let mut new_sheet = use_context::<state::FurState>().sheets.cloned();
+                    let mut new_sheet = state::SHEETS.cloned();
                     new_sheet.edit_todo_sheet = Some(todo_clone_two.clone());
-                    use_context::<state::FurState>().sheets.set(new_sheet);
+                    *state::SHEETS.write() = new_sheet;
                 },
                 p { class: if todo.is_completed { "strikethrough" } else { "" },
                     span { class: "bold", "{todo.name}" }
 
-                    if use_context::<state::FurState>().settings.read().show_todo_project
+                    if state::SETTINGS.read().show_todo_project
                         && !todo.project.is_empty()
                     {
                         "  @{todo.project}"
                     }
 
-                    if use_context::<state::FurState>().settings.read().show_todo_tags
+                    if state::SETTINGS.read().show_todo_tags
                         && !todo.tags.is_empty()
                     {
                         "  #{todo.tags}"
                     }
 
-                    if use_context::<state::FurState>().settings.read().show_todo_rate && todo.rate > 0.0 {
+                    if state::SETTINGS.read().show_todo_rate && todo.rate > 0.0 {
                         "  ${todo.rate}"
                     }
                 }
@@ -214,10 +213,9 @@ fn NewTodoSheet() -> Element {
                 onclick: move |_| {
                     task_input.set(String::new());
                     date.set(Local::now().date_naive().to_string());
-                    let mut state = use_context::<state::FurState>();
-                    let mut new_sheets = state.sheets.read().clone();
+                    let mut new_sheets = state::SHEETS.cloned();
                     new_sheets.new_todo_is_shown = false;
-                    state.sheets.set(new_sheets);
+                    *state::SHEETS.write() = new_sheets;
                 },
                 "{cancel_text}"
             }
@@ -244,10 +242,9 @@ fn NewTodoSheet() -> Element {
                                         .expect("Couldn't write task to database.");
                                     task_input.set(String::new());
                                     date.set(Local::now().date_naive().to_string());
-                                    let mut state = use_context::<state::FurState>();
-                                    let mut new_sheets = state.sheets.read().clone();
+                                    let mut new_sheets = state::SHEETS.cloned();
                                     new_sheets.new_todo_is_shown = false;
-                                    state.sheets.set(new_sheets);
+                                    *state::SHEETS.write() = new_sheets;
                                     update_all_todos();
                                     sync_after_change();
                                 }
@@ -281,27 +278,24 @@ fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
                                         eprintln!("Failed to delete todo: {}", e);
                                     }
                                 }
-                                let mut state = use_context::<state::FurState>();
-                                let mut alert = state.alert.cloned();
-                                let mut new_sheets = state.sheets.read().clone();
+                                let mut alert = state::ALERT.cloned();
+                                let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.edit_todo_sheet = None;
-                                state.sheets.set(new_sheets);
+                                *state::SHEETS.write() = new_sheets;
                                 *TODO_ID_TO_DELETE.write() = None;
                                 alert.close();
-                                state.alert.set(alert.clone());
+                                *state::ALERT.write() = alert.clone();
                                 update_all_todos();
                                 sync_after_change();
                             }
                             fn close_alert() {
-                                let mut state = use_context::<state::FurState>();
-                                let mut alert = state.alert.cloned();
+                                let mut alert = state::ALERT.cloned();
                                 *TODO_ID_TO_DELETE.write() = None;
                                 alert.close();
-                                state.alert.set(alert.clone());
+                                *state::ALERT.write() = alert.clone();
                             }
-                            let mut state = use_context::<state::FurState>();
-                            let mut alert = state.alert.cloned();
-                            let settings = state.settings.read().clone();
+                            let mut alert = state::ALERT.cloned();
+                            let settings = state::SETTINGS.cloned();
                             if settings.show_delete_confirmation {
                                 *TODO_ID_TO_DELETE.write() = Some(todo_uid.clone());
                                 alert.is_shown = true;
@@ -309,15 +303,14 @@ fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
                                 alert.message = loc!("delete-todo-description");
                                 alert.confirm_button = (loc!("delete"), || delete_todo());
                                 alert.cancel_button = Some((loc!("cancel"), || close_alert()));
-                                state.alert.set(alert.clone());
+                                *state::ALERT.write() = alert.clone();
                             } else {
                                 if let Err(e) = database::todos::delete_todo_by_id(&todo_uid) {
                                     eprintln!("Failed to delete todo: {}", e);
                                 }
-                                let mut state = use_context::<state::FurState>();
-                                let mut new_sheets = state.sheets.read().clone();
+                                let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.edit_todo_sheet = None;
-                                state.sheets.set(new_sheets);
+                                *state::SHEETS.write() = new_sheets;
                                 update_all_todos();
                                 sync_after_change();
                             }
@@ -350,10 +343,9 @@ fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
                 button {
                     class: "sheet-cancel-button",
                     onclick: move |_| {
-                        let mut state = use_context::<state::FurState>();
-                        let mut new_sheets = state.sheets.read().clone();
+                        let mut new_sheets = state::SHEETS.cloned();
                         new_sheets.edit_todo_sheet = None;
-                        state.sheets.set(new_sheets);
+                        *state::SHEETS.write() = new_sheets;
                     },
                     {loc!("cancel")}
                 }
@@ -383,10 +375,9 @@ fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
                                         if let Err(e) = database::todos::update_todo(&new_todo) {
                                             eprintln!("Error updating todo in database: {}", e);
                                         }
-                                        let mut state = use_context::<state::FurState>();
-                                        let mut new_sheets = state.sheets.read().clone();
+                                        let mut new_sheets = state::SHEETS.cloned();
                                         new_sheets.edit_todo_sheet = None;
-                                        state.sheets.set(new_sheets);
+                                        *state::SHEETS.write() = new_sheets;
                                         update_all_todos();
                                         sync_after_change();
                                     }
