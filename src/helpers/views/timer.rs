@@ -27,7 +27,10 @@ use std::sync::Once;
 
 use crate::{
     database, formatters,
-    helpers::{server::sync::request_sync, views::task_history::update_task_history},
+    helpers::{
+        server::sync::{request_sync, sync_after_change},
+        views::task_history::update_task_history,
+    },
     loc,
     localization::Localization,
     models::{
@@ -316,4 +319,5 @@ fn continue_after_break() {
     state.alert.set(alert);
     start_timer();
     update_task_history(settings.days_to_show);
+    sync_after_change();
 }

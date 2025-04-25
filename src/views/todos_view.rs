@@ -23,7 +23,7 @@ use dioxus_free_icons::{
 
 use crate::{
     constants::TODO_CSS,
-    helpers::views::todos::update_all_todos,
+    helpers::{server::sync::sync_after_change, views::todos::update_all_todos},
     loc,
     localization::Localization,
     state::{self, TODO_ID_TO_DELETE},
@@ -102,7 +102,7 @@ fn TodoTitleRow(date: NaiveDate) -> Element {
 
 #[component]
 fn TodoListItem(todo: FurTodo) -> Element {
-    let mut todo_clone = todo.clone();
+    let todo_uid = todo.uid.clone();
     let todo_clone_two = todo.clone();
     rsx! {
         div { id: "todo-item",
@@ -110,9 +110,11 @@ fn TodoListItem(todo: FurTodo) -> Element {
                 button {
                     class: "no-bg-button",
                     onclick: move |_| {
-                        todo_clone.is_completed = !todo_clone.is_completed;
-                        match database::todos::update_todo(&todo_clone) {
-                            Ok(_) => helpers::views::todos::update_all_todos(),
+                        match database::todos::toggle_todo_completed(&todo_uid) {
+                            Ok(_) => {
+                                helpers::views::todos::update_all_todos();
+                                sync_after_change();
+                            }
                             Err(e) => eprintln!("Error updating todo: {}", e),
                         }
                     },
@@ -247,6 +249,7 @@ fn NewTodoSheet() -> Element {
                                     new_sheets.new_todo_is_shown = false;
                                     state.sheets.set(new_sheets);
                                     update_all_todos();
+                                    sync_after_change();
                                 }
                             }
                         }
@@ -287,6 +290,7 @@ fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
                                 alert.close();
                                 state.alert.set(alert.clone());
                                 update_all_todos();
+                                sync_after_change();
                             }
                             fn close_alert() {
                                 let mut state = use_context::<state::FurState>();
@@ -315,6 +319,7 @@ fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
                                 new_sheets.edit_todo_sheet = None;
                                 state.sheets.set(new_sheets);
                                 update_all_todos();
+                                sync_after_change();
                             }
                         },
                         Icon { icon: BsTrash3, width: 25, height: 25 }
@@ -383,6 +388,7 @@ fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
                                         new_sheets.edit_todo_sheet = None;
                                         state.sheets.set(new_sheets);
                                         update_all_todos();
+                                        sync_after_change();
                                     }
                                 }
                             }

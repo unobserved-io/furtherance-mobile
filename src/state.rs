@@ -60,6 +60,7 @@ pub struct FurState {
     pub todos: Signal<BTreeMap<NaiveDate, Vec<FurTodo>>>,
     pub user: Signal<Option<FurUser>>,
     pub user_fields: Signal<FurUserFields>,
+    pub sync_message: Signal<Result<String, Box<dyn std::error::Error>>>,
 }
 
 pub fn use_state_provider() {
@@ -72,6 +73,7 @@ pub fn use_state_provider() {
     let todos = use_signal(|| todos::get_all_todos());
     let user = use_signal(|| server::sync::get_user());
     let user_fields = use_signal(|| server::sync::get_user_fields());
+    let sync_message = use_signal(|| Ok(String::new()));
 
     use_context_provider(|| FurState {
         alert,
@@ -83,5 +85,6 @@ pub fn use_state_provider() {
         todos,
         user,
         user_fields,
+        sync_message,
     });
 }

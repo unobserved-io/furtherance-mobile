@@ -139,9 +139,11 @@ earnings-for-selection = Earnings for selection
 ### Data Settings
 sync-server = Sync Server
 server = Server
+server-placeholder = https://example.com:8662
 custom = Custom server
 official-server = Official server
 email = Email
+email-placeholder = email@example.com
 encryption-key = Encryption key
 log-in = Log in
 logging-in = Logging in...

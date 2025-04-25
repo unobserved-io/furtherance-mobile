@@ -396,7 +396,7 @@ impl FurSettings {
 
 pub fn get_data_path() -> PathBuf {
     if let Some(base_dirs) = BaseDirs::new() {
-        println!("BaseDirs data_dir: {:?}", base_dirs.data_dir());
+        // DEBUG println!("BaseDirs data_dir: {:?}", base_dirs.data_dir());
         let path = PathBuf::from(base_dirs.data_dir());
         std::fs::create_dir_all(&path).expect("Could not create data directory");
         return path;

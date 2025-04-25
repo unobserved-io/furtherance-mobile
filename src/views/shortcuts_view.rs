@@ -29,6 +29,7 @@ use crate::{
         actions,
         color_utils::FromHex,
         formatters,
+        server::sync::sync_after_change,
         views::{shortcuts::update_all_shortcuts, task_input::validate_task_input},
     },
     loc,
@@ -215,6 +216,7 @@ fn NewShortcutSheet() -> Element {
                         new_sheets.new_shortcut_is_shown = false;
                         state.sheets.set(new_sheets);
                         update_all_shortcuts();
+                        sync_after_change();
                     }
                 },
                 "{save_text}"
@@ -256,6 +258,7 @@ fn EditShortcutSheet(shortcut: Option<FurShortcut>) -> Element {
                                     alert.close();
                                     state.alert.set(alert.clone());
                                     update_all_shortcuts();
+                                    sync_after_change();
                                 }
                                 fn close_alert() {
                                     let mut state = use_context::<state::FurState>();
@@ -286,6 +289,7 @@ fn EditShortcutSheet(shortcut: Option<FurShortcut>) -> Element {
                                     new_sheets.edit_shortcut_sheet = None;
                                     state.sheets.set(new_sheets);
                                     update_all_shortcuts();
+                                    sync_after_change();
                                 }
                             },
                             Icon { icon: BsTrash3, width: 25, height: 25 }
@@ -347,6 +351,7 @@ fn EditShortcutSheet(shortcut: Option<FurShortcut>) -> Element {
                             new_sheets.edit_shortcut_sheet = None;
                             state.sheets.set(new_sheets);
                             update_all_shortcuts();
+                            sync_after_change();
                         }
                     },
                     {loc!("save")}

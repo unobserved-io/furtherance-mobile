@@ -164,6 +164,7 @@ pub fn retrieve_orphaned_todos(todo_uids: Vec<String>) -> Result<Vec<FurTodo>> {
     Ok(todos)
 }
 
+// TODO: Test if last_updated needs to be set to the current time here
 pub fn update_todo(todo: &FurTodo) -> Result<()> {
     let conn = Connection::open(get_directory())?;
 

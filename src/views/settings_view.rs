@@ -19,9 +19,11 @@ use dioxus::prelude::*;
 use crate::{
     constants::{OFFICIAL_SERVER, SETTINGS_CSS},
     helpers::{
-        server::{login::login_button_pressed, logout::logout_button_pressed, sync::request_sync},
+        server::{self, login::login_button_pressed, logout::logout_button_pressed},
         views::{settings::ServerChoices, timer},
     },
+    loc,
+    localization::Localization,
     state,
 };
 
@@ -54,57 +56,6 @@ pub fn SettingsView() -> Element {
     let show_todo_tags = state.settings.read().show_todo_tags;
     let show_todo_rate = state.settings.read().show_todo_rate;
 
-    // let mut sync_button_row: Row<'_, Message> =
-    //     row![button(text(self.localization.get_message(
-    //         if self.fur_user.is_none() {
-    //             "log-in"
-    //         } else {
-    //             "log-out"
-    //         },
-    //         None
-    //     )))
-    //     .on_press_maybe(if self.fur_user.is_none() {
-    //         if !self.fur_user_fields.server.is_empty()
-    //             && !self.fur_user_fields.email.is_empty()
-    //             && !self.fur_user_fields.encryption_key.is_empty()
-    //         {
-    //             Some(Message::UserLoginPressed)
-    //         } else {
-    //             None
-    //         }
-    //     } else {
-    //         Some(Message::UserLogoutPressed)
-    //     })
-    //     .style(if self.fur_user.is_none() {
-    //         style::primary_button_style
-    //     } else {
-    //         button::secondary
-    //     }),]
-    //     .spacing(10);
-    // sync_button_row = sync_button_row.push_maybe(if self.fur_user.is_some() {
-    //     Some(
-    //         button(text(self.localization.get_message("sync", None)))
-    // .on_press_maybe(match self.fur_user {
-    //     Some(_) => {
-    //         if self.login_message.iter().any(|message| {
-    //             message != &self.localization.get_message("syncing", None)
-    //         }) {
-    //             Some(Message::SyncWithServer)
-    //         } else {
-    //             None
-    //         }
-    //     }
-    //     None => None,
-    // })
-    //             .style(style::primary_button_style),
-    //     )
-    // } else {
-    //     Some(
-    //         button(text(self.localization.get_message("sign-up", None)))
-    //             .on_press(Message::OpenUrl("https://furtherance.app/sync".to_string()))
-    //             .style(style::primary_button_style),
-    //     )
-    // });
     // sync_server_col = sync_server_col.push(sync_button_row);
     // sync_server_col = sync_server_col.push_maybe(match &self.login_message {
     //     Ok(msg) => {
@@ -126,7 +77,7 @@ pub fn SettingsView() -> Element {
             SettingsTitleRow { title: "Sync".to_string() }
             div { class: "settings-group",
                 SettingsDropDownRow {
-                    label: "Server".to_string(),
+                    label: loc!("server"),
                     list_items: ServerChoices::all_as_strings(),
                     selected_item: state.user_fields.read().server_selection.to_string(),
                     onchange: move |event: Event<FormData>| {
@@ -145,11 +96,24 @@ pub fn SettingsView() -> Element {
                         state.user_fields.set(user_fields_clone);
                     },
                 }
+                if state.user_fields.read().server_selection == ServerChoices::Custom {
+                    SettingsInputRow {
+                        label: loc!("server"),
+                        input_type: "url".to_string(),
+                        value: state.user_fields.read().server.clone(),
+                        placeholder: loc!("server-placeholder"),
+                        oninput: move |event: Event<FormData>| {
+                            let mut user_fields_clone = state.user_fields.read().clone();
+                            user_fields_clone.server = event.value();
+                            state.user_fields.set(user_fields_clone);
+                        },
+                    }
+                }
                 SettingsInputRow {
-                    label: "Email".to_string(),
+                    label: loc!("email"),
                     input_type: "email".to_string(),
                     value: state.user_fields.read().email.clone(),
-                    placeholder: "Email address".to_string(),
+                    placeholder: loc!("email-placeholder"),
                     oninput: move |event: Event<FormData>| {
                         let mut user_fields_clone = state.user_fields.read().clone();
                         user_fields_clone.email = event.value();
@@ -183,15 +147,58 @@ pub fn SettingsView() -> Element {
                         }
                     },
                 }
+                // TODO: Check login/logout
+                //        //     .on_press_maybe(if self.fur_user.is_none() {
+                //         if !self.fur_user_fields.server.is_empty()
+                //             && !self.fur_user_fields.email.is_empty()
+                //             && !self.fur_user_fields.encryption_key.is_empty()
+                //         {
+                //             Some(Message::UserLoginPressed)
+                //         } else {
+                //             None
+                //         }
+                //     } else {
+                //         Some(Message::UserLogoutPressed)
+                //     })
                 SettingsButtonRow {
                     label: "Sync".to_string(),
                     dangerous: false,
                     onclick: move |_| {
-                        if state.user.read().is_some() {
-                            request_sync();
+                        if state.user.read().is_some()
+                            && state
+                                .sync_message
+                                .read()
+                                .iter()
+                                .any(|message| message != &loc!("syncing"))
+                        {
+                            server::sync::request_sync();
                         }
                     },
                 }
+                // sync_button_row = sync_button_row.push_maybe(if self.fur_user.is_some() {
+                //     Some(
+                //         button(text(self.localization.get_message("sync", None)))
+                // .on_press_maybe(match self.fur_user {
+                //     Some(_) => {
+                //         if self.login_message.iter().any(|message| {
+                //             message != &self.localization.get_message("syncing", None)
+                //         }) {
+                //             Some(Message::SyncWithServer)
+                //         } else {
+                //             None
+                //         }
+                //     }
+                //     None => None,
+                // })
+                //             .style(style::primary_button_style),
+                //     )
+                // } else {
+                //     Some(
+                //         button(text(self.localization.get_message("sign-up", None)))
+                //             .on_press(Message::OpenUrl("https://furtherance.app/sync".to_string()))
+                //             .style(style::primary_button_style),
+                //     )
+                // });
                 SettingsButtonRow {
                     label: "Log out".to_string(),
                     dangerous: true,

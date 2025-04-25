@@ -14,13 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::{sync::Arc, time::Duration};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Once},
+    time::Duration,
+};
 
 use dioxus::{
     hooks::use_context,
-    prelude::spawn,
+    prelude::{consume_context, spawn, spawn_forever},
     signals::{Readable, Writable},
 };
+use fluent::FluentValue;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::time;
@@ -33,19 +38,24 @@ use crate::{
         tasks::{SortBy, SortOrder},
     },
     helpers::{self, server::logout, views::settings::ServerChoices},
+    loc,
+    localization::Localization,
     models::{
         fur_shortcut::{EncryptedShortcut, FurShortcut},
         fur_task::{EncryptedTask, FurTask},
         fur_todo::{EncryptedTodo, FurTodo},
         fur_user::{FurUser, FurUserFields},
     },
-    state,
+    state::{self, TIMER_IS_RUNNING},
 };
 
 use super::{
     encryption,
     login::{self, ApiError},
 };
+
+pub const SETTINGS_MESSAGE_DURATION: u64 = 8;
+static SYNC_INIT: Once = Once::new();
 
 #[derive(Serialize, Deserialize)]
 pub struct SyncRequest {
@@ -93,10 +103,26 @@ pub fn get_user_fields() -> FurUserFields {
     }
 }
 
+pub fn schedule_sync() {
+    SYNC_INIT.call_once(|| {
+        spawn(async move {
+            loop {
+                if use_context::<state::FurState>().user.cloned().is_some() {
+                    helpers::server::sync::request_sync();
+                }
+                tokio::time::sleep(Duration::from_secs(600)).await; // Sync every 10 minutes
+            }
+        });
+    });
+}
+
 pub fn request_sync() {
-    let state = use_context::<state::FurState>();
+    println!("Syncing");
+    *TIMER_IS_RUNNING.write() = false;
+    println!("READ TIMER! {}", TIMER_IS_RUNNING);
+    let state = consume_context::<state::FurState>();
     let settings = state.settings.read().clone();
-    // let last_sync = state.settings.read().last_sync.clone();
+    println!("DOES IT GET HERE");
 
     let user = match state.user.read().clone() {
         Some(user) => user,
@@ -106,112 +132,104 @@ pub fn request_sync() {
         }
     };
 
-    // TODO: Create message to show in settings or as a toast
-    // self.login_message = Ok(self.localization.get_message("syncing", None));
+    set_positive_sync_messsage(loc!("syncing"));
 
     let encryption_key =
         match encryption::decrypt_encryption_key(&user.encrypted_key, &user.key_nonce) {
             Ok(key) => key,
             Err(e) => {
                 eprintln!("Failed to decrypt encryption key (SyncWithServer): {:?}", e);
-                // return messages::set_negative_temp_notice(
-                //     &mut self.login_message,
-                //     self.localization.get_message("error-decrypting-key", None),
-                // );
+                set_negative_sync_message(loc!("error-decrypting-key"));
                 return;
             }
         };
 
     let needs_full_sync = settings.needs_full_sync;
 
-    spawn(
-        async move {
-            let new_tasks: Vec<FurTask>;
-            let new_shortcuts: Vec<FurShortcut>;
-            let new_todos: Vec<FurTodo>;
+    spawn(async move {
+        let new_tasks: Vec<FurTask>;
+        let new_shortcuts: Vec<FurShortcut>;
+        let new_todos: Vec<FurTodo>;
 
-            if needs_full_sync {
-                new_tasks =
-                    database::tasks::retrieve_all_tasks(SortBy::StartTime, SortOrder::Ascending)
-                        .unwrap_or_default();
-                new_shortcuts = database::shortcuts::retrieve_all_shortcuts().unwrap_or_default();
-                new_todos = database::todos::retrieve_all_todos().unwrap_or_default();
-            } else {
-                new_tasks = database::tasks::retrieve_tasks_since_timestamp(settings.last_sync)
+        if needs_full_sync {
+            new_tasks =
+                database::tasks::retrieve_all_tasks(SortBy::StartTime, SortOrder::Ascending)
                     .unwrap_or_default();
-                new_shortcuts =
-                    database::shortcuts::retrieve_shortcuts_since_timestamp(settings.last_sync)
-                        .unwrap_or_default();
-                new_todos = database::todos::retrieve_todos_since_timestamp(settings.last_sync)
+            new_shortcuts = database::shortcuts::retrieve_all_shortcuts().unwrap_or_default();
+            new_todos = database::todos::retrieve_all_todos().unwrap_or_default();
+        } else {
+            new_tasks = database::tasks::retrieve_tasks_since_timestamp(settings.last_sync)
+                .unwrap_or_default();
+            new_shortcuts =
+                database::shortcuts::retrieve_shortcuts_since_timestamp(settings.last_sync)
                     .unwrap_or_default();
-            }
+            new_todos = database::todos::retrieve_todos_since_timestamp(settings.last_sync)
+                .unwrap_or_default();
+        }
 
-            let encrypted_tasks: Vec<EncryptedTask> = new_tasks
-                .into_iter()
-                .filter_map(|task| match encryption::encrypt(&task, &encryption_key) {
-                    Ok((encrypted_data, nonce)) => Some(EncryptedTask {
+        let encrypted_tasks: Vec<EncryptedTask> = new_tasks
+            .into_iter()
+            .filter_map(|task| match encryption::encrypt(&task, &encryption_key) {
+                Ok((encrypted_data, nonce)) => Some(EncryptedTask {
+                    encrypted_data,
+                    nonce,
+                    uid: task.uid,
+                    last_updated: task.last_updated,
+                }),
+                Err(e) => {
+                    eprintln!("Failed to encrypt task: {:?}", e);
+                    None
+                }
+            })
+            .collect();
+
+        let encrypted_shortcuts: Vec<EncryptedShortcut> = new_shortcuts
+            .into_iter()
+            .filter_map(
+                |shortcut| match encryption::encrypt(&shortcut, &encryption_key) {
+                    Ok((encrypted_data, nonce)) => Some(EncryptedShortcut {
                         encrypted_data,
                         nonce,
-                        uid: task.uid,
-                        last_updated: task.last_updated,
+                        uid: shortcut.uid,
+                        last_updated: shortcut.last_updated,
                     }),
                     Err(e) => {
-                        eprintln!("Failed to encrypt task: {:?}", e);
+                        eprintln!("Failed to encrypt shortcut: {:?}", e);
                         None
                     }
-                })
-                .collect();
-
-            let encrypted_shortcuts: Vec<EncryptedShortcut> = new_shortcuts
-                .into_iter()
-                .filter_map(
-                    |shortcut| match encryption::encrypt(&shortcut, &encryption_key) {
-                        Ok((encrypted_data, nonce)) => Some(EncryptedShortcut {
-                            encrypted_data,
-                            nonce,
-                            uid: shortcut.uid,
-                            last_updated: shortcut.last_updated,
-                        }),
-                        Err(e) => {
-                            eprintln!("Failed to encrypt shortcut: {:?}", e);
-                            None
-                        }
-                    },
-                )
-                .collect();
-
-            let encrypted_todos: Vec<EncryptedTodo> = new_todos
-                .into_iter()
-                .filter_map(|todo| match encryption::encrypt(&todo, &encryption_key) {
-                    Ok((encrypted_data, nonce)) => Some(EncryptedTodo {
-                        encrypted_data,
-                        nonce,
-                        uid: todo.uid,
-                        last_updated: todo.last_updated,
-                    }),
-                    Err(e) => {
-                        eprintln!("Failed to encrypt todo: {:?}", e);
-                        None
-                    }
-                })
-                .collect();
-
-            let sync_count =
-                encrypted_tasks.len() + encrypted_shortcuts.len() + encrypted_todos.len();
-
-            let sync_result = sync_with_server(
-                &user,
-                settings.last_sync,
-                encrypted_tasks,
-                encrypted_shortcuts,
-                encrypted_todos,
+                },
             )
-            .await;
+            .collect();
 
-            process_sync_result((sync_result, sync_count));
-            // (sync_result, sync_count)
-        }, // TODO: Message::SyncComplete,
-    );
+        let encrypted_todos: Vec<EncryptedTodo> = new_todos
+            .into_iter()
+            .filter_map(|todo| match encryption::encrypt(&todo, &encryption_key) {
+                Ok((encrypted_data, nonce)) => Some(EncryptedTodo {
+                    encrypted_data,
+                    nonce,
+                    uid: todo.uid,
+                    last_updated: todo.last_updated,
+                }),
+                Err(e) => {
+                    eprintln!("Failed to encrypt todo: {:?}", e);
+                    None
+                }
+            })
+            .collect();
+
+        let sync_count = encrypted_tasks.len() + encrypted_shortcuts.len() + encrypted_todos.len();
+
+        let sync_result = sync_with_server(
+            &user,
+            settings.last_sync,
+            encrypted_tasks,
+            encrypted_shortcuts,
+            encrypted_todos,
+        )
+        .await;
+
+        process_sync_result((sync_result, sync_count));
+    });
 }
 
 pub async fn sync_with_server(
@@ -294,10 +312,7 @@ fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
                 Some(user) => user,
                 None => {
                     eprintln!("Please log in first");
-                    // return messages::set_negative_temp_notice(
-                    //     &mut self.login_message,
-                    //     self.localization.get_message("log-in-first", None),
-                    // );
+                    set_negative_sync_message(loc!("log-in-first"));
                     return;
                 }
             };
@@ -307,10 +322,7 @@ fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
                     Ok(key) => key,
                     Err(e) => {
                         eprintln!("Failed to decrypt encryption key (SyncComplete): {:?}", e);
-                        // return messages::set_negative_temp_notice(
-                        //     &mut self.login_message,
-                        //     self.localization.get_message("error-decrypting-key", None),
-                        // );
+                        set_negative_sync_message(loc!("error-decrypting-key"));
                         return;
                     }
                 };
@@ -536,20 +548,16 @@ fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
             settings.needs_full_sync = false;
             state.settings.set(settings.clone());
 
-            // TODO: Run these async
+            // TODO: Check if these are updated since they run async
             spawn(async move {
-                helpers::views::task_history::update_task_history(settings.days_to_show);
                 helpers::views::todos::update_all_todos();
+                helpers::views::task_history::update_task_history(settings.days_to_show);
                 helpers::views::shortcuts::update_all_shortcuts();
             });
-            // TODO: Set notice
-            // tasks.push(messages::set_positive_temp_notice(
-            //     &mut self.login_message,
-            //     self.localization.get_message(
-            //         "sync-successful",
-            //         Some(&HashMap::from([("count", FluentValue::from(sync_count))])),
-            //     ),
-            // ));
+            set_positive_sync_messsage(loc!(
+                "sync-successful",
+                &HashMap::from([("count", FluentValue::from(sync_count))])
+            ));
         }
         (Err(ApiError::TokenRefresh(msg)), _) if msg == "Failed to refresh token" => {
             eprintln!("Sync error. Credentials have changed. Log in again.");
@@ -562,38 +570,29 @@ fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
                     };
                     state.user.set(None);
                     state.user_fields.set(FurUserFields::default());
-                    // TODO: Set notice
-                    // return messages::set_negative_temp_notice(
-                    //     &mut self.login_message,
-                    //     self.localization.get_message("reauthenticate-error", None),
-                    // );
+                    set_negative_sync_message(loc!("reauthenticate-error"));
                 });
             }
         }
         (Err(ApiError::InactiveSubscription(msg)), _) => {
             eprintln!("Sync error: {}", msg);
-            // TODO: Set notice
-            // return messages::set_negative_temp_notice(
-            //     &mut self.login_message,
-            //     self.localization.get_message("subscription-inactive", None),
-            // );
+            set_negative_sync_message(loc!("subscription-inactive"));
         }
         (Err(e), _) => {
             eprintln!("Sync error: {:?}", e);
-            // TODO: Set notice
-            // return messages::set_negative_temp_notice(
-            //     &mut self.login_message,
-            //     self.localization.get_message("sync-failed", None),
-            // );
+            set_negative_sync_message(loc!("sync-failed"));
         }
     }
 }
 
 pub fn sync_after_change() {
-    if use_context::<state::FurState>().user.read().is_some() {
-        spawn(async {
+    if consume_context::<state::FurState>().user.read().is_some() {
+        println!("Sync after change");
+        spawn_forever(async move {
             // Small delay to allow any pending DB operations to complete
+            println!("In async");
             time::sleep(Duration::from_secs(1)).await;
+            request_sync();
         });
     }
 }
@@ -604,4 +603,36 @@ pub fn reset_user() {
         Err(e) => eprintln!("Error deleting user credentials: {}", e),
     };
     use_context::<state::FurState>().user.set(None);
+}
+
+pub fn set_positive_sync_messsage(message: String) {
+    spawn(async {
+        use_context::<state::FurState>()
+            .sync_message
+            .set(Ok(message));
+        tokio::time::sleep(std::time::Duration::from_secs(SETTINGS_MESSAGE_DURATION)).await;
+        clear_sync_message();
+    });
+}
+
+pub fn set_negative_sync_message(message: String) {
+    spawn(async {
+        use_context::<state::FurState>()
+            .sync_message
+            .set(Err(message.into()));
+        tokio::time::sleep(std::time::Duration::from_secs(SETTINGS_MESSAGE_DURATION)).await;
+        clear_sync_message();
+    });
+}
+
+pub fn clear_sync_message() {
+    let mut state = use_context::<state::FurState>();
+    if state
+        .sync_message
+        .read()
+        .iter()
+        .any(|message| message != &loc!("syncing"))
+    {
+        state.sync_message.set(Ok(String::new()));
+    }
 }

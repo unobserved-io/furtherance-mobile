@@ -19,7 +19,10 @@ use dioxus::{hooks::use_context, signals::Readable};
 
 use crate::{state, NavTab};
 
-use super::views::{task_history, timer};
+use super::{
+    server::sync::sync_after_change,
+    views::{task_history, timer},
+};
 
 pub fn start_stop_pressed() {
     if state::TIMER_IS_RUNNING.cloned() {
@@ -46,7 +49,8 @@ pub fn start_stop_pressed() {
                 .read()
                 .days_to_show,
         );
-        // TODO: Sync after change - tasks.push(messages::sync_after_change(&self.fur_user));
+
+        sync_after_change();
         // }
     } else {
         timer::start_timer();

@@ -27,7 +27,6 @@ use dioxus_free_icons::{
 };
 use fluent::FluentValue;
 
-use crate::state::{self, TASK_IDS_TO_DELETE};
 use crate::{
     constants::SHEET_CSS,
     helpers::{
@@ -38,6 +37,10 @@ use crate::{
 use crate::{database, loc, models::fur_task::FurTask};
 use crate::{
     helpers::formatters::seconds_to_formatted_duration, models::fur_task_group::FurTaskGroup,
+};
+use crate::{
+    helpers::server::sync::sync_after_change,
+    state::{self, TASK_IDS_TO_DELETE},
 };
 use crate::{helpers::views::task_history, localization::Localization};
 
@@ -383,6 +386,7 @@ fn NewTaskSheet() -> Element {
                                 task_history::update_task_history(
                                     use_context::<state::FurState>().settings.read().days_to_show,
                                 );
+                                sync_after_change();
                             }
                         }
                     }
@@ -449,6 +453,7 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                     task_history::update_task_history(
                                         use_context::<state::FurState>().settings.read().days_to_show,
                                     );
+                                    sync_after_change();
                                 }
                                 fn close_alert() {
                                     let mut state = use_context::<state::FurState>();
@@ -480,6 +485,7 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                         task_history::update_task_history(
                                             use_context::<state::FurState>().settings.read().days_to_show,
                                         );
+                                        sync_after_change();
                                     }
                                 }
                             },
@@ -565,6 +571,7 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                                 task_history::update_task_history(
                                     use_context::<state::FurState>().settings.read().days_to_show,
                                 );
+                                sync_after_change();
                             }
                             fn close_alert() {
                                 let mut state = use_context::<state::FurState>();
@@ -595,6 +602,7 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                                 task_history::update_task_history(
                                     use_context::<state::FurState>().settings.read().days_to_show,
                                 );
+                                sync_after_change();
                             }
                         },
                         Icon { icon: BsTrash3, width: 25, height: 25 }
@@ -674,48 +682,50 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                 button {
                     class: "sheet-primary-button",
                     onclick: move |event| {
-                        if task_input.read().trim().is_empty() {
-                            event.prevent_default();
-                        } else {
-                            if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
-                                &start_time.cloned(),
-                            ) {
-                                if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
-                                    &stop_time.cloned(),
+                           if task_input.read().trim().is_empty() {
+                                event.prevent_default();
+                            } else {
+                                if let MappedLocalTime::Single(parsed_start_time) = parse_datetime_from_str(
+                                    &start_time.cloned(),
                                 ) {
-                                    let (name, project, tags, rate) = formatters::split_task_input(
-                                        &task_input.cloned(),
-                                    );
-                                    if name != task.name || project != task.project || tags != task.tags
-                                        || rate != task.rate || parsed_start_time != task.start_time
-                                        || parsed_stop_time != task.stop_time
-                                    {
-                                        database::tasks::update_task(
-                                                &FurTask {
-                                                    name,
-                                                    start_time: parsed_start_time,
-                                                    stop_time: parsed_stop_time,
-                                                    tags,
-                                                    project,
-                                                    rate,
-                                                    currency: task_currency.clone(),
-                                                    uid: task_uid.clone(),
-                                                    is_deleted: task.is_deleted,
-                                                    last_updated: task.last_updated,
-                                                },
-                                            )
-                                            .expect("Couldn't update task in database.");
+                                    if let MappedLocalTime::Single(parsed_stop_time) = parse_datetime_from_str(
+                                        &stop_time.cloned(),
+                                    ) {
+                                        let (name, project, tags, rate) = formatters::split_task_input(
+                                            &task_input.cloned(),
+                                        );
+                                        if name != task.name || project != task.project
+                                            || tags != task.tags || rate != task.rate
+                                            || parsed_start_time != task.start_time
+                                            || parsed_stop_time != task.stop_time
+                                        {
+                                            database::tasks::update_task(
+                                                    &FurTask {
+                                                        name,
+                                                        start_time: parsed_start_time,
+                                                        stop_time: parsed_stop_time,
+                                                        tags,
+                                                        project,
+                                                        rate,
+                                                        currency: task_currency.clone(),
+                                                        uid: task_uid.clone(),
+                                                        is_deleted: task.is_deleted,
+                                                        last_updated: chrono::Utc::now().timestamp(),
+                                                    },
+                                                )
+                                                .expect("Couldn't update task in database.");
+                                        }
+                                        task_history::update_task_history(
+                                            use_context::<state::FurState>().settings.read().days_to_show,
+                                        );
+                                        sync_after_change();
+                                        let mut state = use_context::<state::FurState>();
+                                        let mut new_sheets = state.sheets.read().clone();
+                                        new_sheets.group_details_sheet = None;
+                                        new_sheets.task_edit_sheet = None;
+                                        state.sheets.set(new_sheets);
                                     }
-                                    let mut state = use_context::<state::FurState>();
-                                    let mut new_sheets = state.sheets.read().clone();
-                                    new_sheets.group_details_sheet = None;
-                                    new_sheets.task_edit_sheet = None;
-                                    state.sheets.set(new_sheets);
-                                    task_history::update_task_history(
-                                        use_context::<state::FurState>().settings.read().days_to_show,
-                                    );
                                 }
-                            }
                         }
                     },
                     {loc!("save")}
@@ -843,6 +853,7 @@ fn AddToGroupSheet(group: Option<FurTaskGroup>) -> Element {
                                 task_history::update_task_history(
                                     use_context::<state::FurState>().settings.read().days_to_show,
                                 );
+                                sync_after_change();
                             }
                         }
                     },
@@ -907,6 +918,7 @@ fn EditGroupSheet(group: Option<FurTaskGroup>) -> Element {
                         task_history::update_task_history(
                             use_context::<state::FurState>().settings.read().days_to_show,
                         );
+                        sync_after_change();
                     },
                     {loc!("save")}
                 }

@@ -71,7 +71,7 @@ use dioxus_free_icons::{
     icons::bs_icons::{BsBookmark, BsCheck2Circle, BsGear, BsHourglassSplit},
     Icon, IconShape,
 };
-use helpers::{formatters, views::timer::ensure_timer_running};
+use helpers::{formatters, server::sync::schedule_sync, views::timer::ensure_timer_running};
 use state::ACTIVE_TAB;
 use views::{
     settings_view::SettingsView, shortcuts_view::ShortcutsView, timer_view::TimerView,
@@ -105,6 +105,8 @@ fn App() -> Element {
         Err(e) => eprintln!("Error retrieving persisting timer: {}", e),
     }
     ensure_timer_running();
+    schedule_sync();
+
     let state = use_context::<state::FurState>();
     let alert = state.alert.read().clone();
     let sheets = state.sheets.read().clone();
