@@ -22,7 +22,7 @@ use chrono::{
 };
 use dioxus::prelude::*;
 use dioxus_free_icons::{
-    icons::bs_icons::{BsPencil, BsPlayFill, BsPlus, BsPlusLg, BsStopFill, BsTrash3, BsXLg},
+    icons::bs_icons::{BsPencil, BsPlayFill, BsPlusLg, BsStopFill, BsTrash3, BsXLg},
     Icon,
 };
 use fluent::FluentValue;
@@ -108,7 +108,7 @@ pub fn AddNewTask() -> Element {
                     new_sheets.new_task_is_shown = true;
                     *state::SHEETS.write() = new_sheets;
                 },
-                Icon { icon: BsPlus, width: 40, height: 40 }
+                Icon { icon: BsPlusLg, width: 30, height: 30 }
             }
         }
     }

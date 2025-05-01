@@ -77,9 +77,9 @@ pub fn TopButtons(edit_mode: Signal<bool>) -> Element {
                     edit_mode.set(!edit_mode.cloned());
                 },
                 if edit_mode.cloned() {
-                    Icon { icon: BsPencilFill, width: 25, height: 25 }
+                    Icon { icon: BsPencilFill, width: 30, height: 30 }
                 } else {
-                    Icon { icon: BsPencil, width: 25, height: 25 }
+                    Icon { icon: BsPencil, width: 30, height: 30 }
                 }
             }
             if !edit_mode.cloned() {
@@ -90,7 +90,7 @@ pub fn TopButtons(edit_mode: Signal<bool>) -> Element {
                         new_sheets.new_shortcut_is_shown = true;
                         *state::SHEETS.write() = new_sheets;
                     },
-                    Icon { icon: BsPlusLg, width: 25, height: 25 }
+                    Icon { icon: BsPlusLg, width: 30, height: 30 }
                 }
             }
         }

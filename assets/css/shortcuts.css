@@ -1,3 +1,7 @@
+.shortcut-bubble:first-child {
+    margin-top: 0.2rem;
+}
+
 .shortcut-bubble {
     display: flex;
     align-items: center;

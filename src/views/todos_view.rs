@@ -17,7 +17,7 @@
 use chrono::{offset::LocalResult, Local, NaiveDate, TimeZone};
 use dioxus::prelude::*;
 use dioxus_free_icons::{
-    icons::bs_icons::{BsCheckSquare, BsPlayFill, BsPlus, BsSquare, BsTrash3},
+    icons::bs_icons::{BsCheckSquare, BsPlayFill, BsPlusLg, BsSquare, BsTrash3},
     Icon,
 };
 
@@ -83,7 +83,7 @@ pub fn AddNewTodo() -> Element {
                     new_sheets.new_todo_is_shown = true;
                     *state::SHEETS.write() = new_sheets;
                 },
-                Icon { icon: BsPlus, width: 40, height: 40 }
+                Icon { icon: BsPlusLg, width: 30, height: 30 }
             }
         }
     }
