@@ -1125,7 +1125,7 @@ dependencies = [
  "tracing",
  "tray-icon",
  "urlencoding",
- "webbrowser",
+ "webbrowser 0.8.15",
  "wry",
 ]
 
@@ -1822,6 +1822,8 @@ dependencies = [
  "toml",
  "uuid",
  "wasm-bindgen-futures",
+ "web-sys",
+ "webbrowser 1.0.4",
 ]
 
 [[package]]
@@ -5736,6 +5738,23 @@ dependencies = [
  "ndk-context",
  "objc",
  "raw-window-handle 0.5.2",
+ "url",
+ "web-sys",
+]
+
+[[package]]
+name = "webbrowser"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5df295f8451142f1856b1bd86a606dfe9587d439bc036e319c827700dbd555e"
+dependencies = [
+ "core-foundation 0.10.0",
+ "home",
+ "jni",
+ "log",
+ "ndk-context",
+ "objc2 0.6.0",
+ "objc2-foundation 0.3.0",
  "url",
  "web-sys",
 ]

@@ -126,9 +126,35 @@ pub fn SettingsView() -> Element {
                         *state::USER_FIELDS.write() = user_fields_clone;
                     },
                 }
+                if state::USER.read().is_some() {
+                    SettingsButtonRow {
+                        label: loc!("sync"),
+                        dangerous: false,
+                        onclick: move |_| {
+                            if state::USER.read().is_some()
+                                && state::SYNC_MESSAGE
+                                    .read()
+                                    .iter()
+                                    .any(|message| message != &loc!("syncing"))
+                            {
+                                server::sync::request_sync();
+                            }
+                        },
+                    }
+                } else {
+                    SettingsButtonRow {
+                        label: loc!("sign-up"),
+                        dangerous: false,
+                        onclick: move |_| {
+                            if let Err(e) = webbrowser::open("https://furtherance.app/sync") {
+                                eprintln!("Failed to open URL in browser: {}", e);
+                            }
+                        },
+                    }
+                }
                 SettingsButtonRow {
-                    label: if state::USER.read().is_some() { "Log out".to_string() } else { "Log in".to_string() },
-                    dangerous: false,
+                    label: if state::USER.read().is_some() { loc!("log-out") } else { loc!("log-in") },
+                    dangerous: if state::USER.read().is_some() { true } else { false },
                     onclick: move |_| {
                         if state::USER.read().is_some() {
                             logout_button_pressed();
@@ -141,62 +167,6 @@ pub fn SettingsView() -> Element {
                             }
                         }
                     },
-                }
-                // TODO: Check login/logout
-                //        //     .on_press_maybe(if self.fur_user.is_none() {
-                //         if !self.fur_user_fields.server.is_empty()
-                //             && !self.fur_user_fields.email.is_empty()
-                //             && !self.fur_user_fields.encryption_key.is_empty()
-                //         {
-                //             Some(Message::UserLoginPressed)
-                //         } else {
-                //             None
-                //         }
-                //     } else {
-                //         Some(Message::UserLogoutPressed)
-                //     })
-                SettingsButtonRow {
-                    label: "Sync".to_string(),
-                    dangerous: false,
-                    onclick: move |_| {
-                        if state::USER.read().is_some()
-                            && state::SYNC_MESSAGE
-                                .read()
-                                .iter()
-                                .any(|message| message != &loc!("syncing"))
-                        {
-                            server::sync::request_sync();
-                        }
-                    },
-                }
-                // sync_button_row = sync_button_row.push_maybe(if self.fur_user.is_some() {
-                //     Some(
-                //         button(text(self.localization.get_message("sync", None)))
-                // .on_press_maybe(match self.fur_user {
-                //     Some(_) => {
-                //         if self.login_message.iter().any(|message| {
-                //             message != &self.localization.get_message("syncing", None)
-                //         }) {
-                //             Some(Message::SyncWithServer)
-                //         } else {
-                //             None
-                //         }
-                //     }
-                //     None => None,
-                // })
-                //             .style(style::primary_button_style),
-                //     )
-                // } else {
-                //     Some(
-                //         button(text(self.localization.get_message("sign-up", None)))
-                //             .on_press(Message::OpenUrl("https://furtherance.app/sync".to_string()))
-                //             .style(style::primary_button_style),
-                //     )
-                // });
-                SettingsButtonRow {
-                    label: "Log out".to_string(),
-                    dangerous: true,
-                    onclick: move |_| {},
                 }
             }
 

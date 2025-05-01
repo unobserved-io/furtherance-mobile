@@ -37,6 +37,8 @@ tokio = { version = "1.44", features = ["full"] }
 toml = "0.8"
 uuid = { version = "1.16", features = ["v4"] }
 wasm-bindgen-futures = "0.4.50"
+webbrowser = "1.0"
+web-sys = { version = "0.3.77", features = ["Window"] }
 
 [features]
 default = ["mobile"]
