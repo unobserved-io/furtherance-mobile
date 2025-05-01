@@ -4,12 +4,13 @@
 
 html {
     scrollbar-width: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0); /* Stops gray flash on iOS */
 }
 
 html,
 body {
     margin: 0;
-    padding: 0.5rem 0.2rem;
+    padding: 0 0.2rem;
     overflow-x: hidden;
     height: 100%;
 }
@@ -24,7 +25,7 @@ body::-webkit-scrollbar {
     display: none;
 }
 
-.page-content {
+#page-content {
     padding-bottom: 80px;
     max-height: calc(100vh - 80px);
     overflow-y: auto;

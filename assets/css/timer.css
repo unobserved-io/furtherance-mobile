@@ -1,9 +1,10 @@
 #timer {
-    display: flex;
+    /*display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    margin: 1em;
+    align-items: center;*/
+    margin: auto;
+    width: 50%;
 }
 
 .timer-text {
@@ -129,6 +130,7 @@
     margin-top: 0.1rem !important;
 }
 
-#add-new-task {
-    float: right;
+.add-new-task {
+    display: flex;
+    justify-content: flex-end;
 }

@@ -160,6 +160,7 @@ input:checked + .slider:before {
     appearance: none;
     background-color: transparent;
     border: none;
+    outline: none;
     font-family: inherit;
     font-size: inherit;
     margin: 0;
@@ -175,7 +176,7 @@ input:checked + .slider:before {
 }
 
 .settings-input:focus {
-    outline: 1px solid var(--primary-color);
+    outline: none;
 }
 
 .settings-button {

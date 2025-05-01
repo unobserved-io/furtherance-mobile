@@ -75,7 +75,7 @@ pub fn TodosView() -> Element {
 #[component]
 pub fn AddNewTodo() -> Element {
     rsx! {
-        div { id: "add-new-todo",
+        div { class: "add-new-todo",
             button {
                 class: "no-bg-button",
                 onclick: move |_| {
@@ -143,15 +143,11 @@ fn TodoListItem(todo: FurTodo) -> Element {
                 p { class: if todo.is_completed { "strikethrough" } else { "" },
                     span { class: "bold", "{todo.name}" }
 
-                    if state::SETTINGS.read().show_todo_project
-                        && !todo.project.is_empty()
-                    {
+                    if state::SETTINGS.read().show_todo_project && !todo.project.is_empty() {
                         "  @{todo.project}"
                     }
 
-                    if state::SETTINGS.read().show_todo_tags
-                        && !todo.tags.is_empty()
-                    {
+                    if state::SETTINGS.read().show_todo_tags && !todo.tags.is_empty() {
                         "  #{todo.tags}"
                     }
 

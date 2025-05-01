@@ -100,7 +100,7 @@ pub fn TimerView() -> Element {
 #[component]
 pub fn AddNewTask() -> Element {
     rsx! {
-        div { id: "add-new-task",
+        div { class: "add-new-task",
             button {
                 class: "no-bg-button",
                 onclick: move |_| {
@@ -201,9 +201,7 @@ pub fn HistoryTitleRow(date: NaiveDate, task_groups: Vec<FurTaskGroup>) -> Eleme
             if state::SETTINGS.read().show_daily_time_total {
                 div { class: "daily-totals",
                     p { class: "bold", "{total_time_str}" }
-                    if state::SETTINGS.read().show_task_earnings
-                        && total_earnings > 0.0
-                    {
+                    if state::SETTINGS.read().show_task_earnings && total_earnings > 0.0 {
                         p { "{total_earnings_str}" }
                     }
                 }
@@ -238,23 +236,17 @@ pub fn HistoryGroupContainer(task_group: FurTaskGroup) -> Element {
 
             div { class: "task-bubble-middle",
                 p { class: "bold", "{task_group.name}" }
-                if state::SETTINGS.read().show_task_project
-                    && !task_group.project.is_empty()
-                {
+                if state::SETTINGS.read().show_task_project && !task_group.project.is_empty() {
                     p { class: "task-details", "@{task_group.project}" }
                 }
-                if state::SETTINGS.read().show_task_tags
-                    && !task_group.tags.is_empty()
-                {
+                if state::SETTINGS.read().show_task_tags && !task_group.tags.is_empty() {
                     p { class: "task-details", "#{task_group.tags}" }
                 }
             }
 
             div { class: "task-bubble-right",
                 p { class: "bold", "{total_time_str}" }
-                if state::SETTINGS.read().show_task_earnings
-                    && task_group.rate > 0.0
-                {
+                if state::SETTINGS.read().show_task_earnings && task_group.rate > 0.0 {
                     p { "{total_earnings_str}" }
                 }
             }
@@ -443,9 +435,7 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                     *TASK_IDS_TO_DELETE.write() = None;
                                     alert.close();
                                     *state::ALERT.write() = alert.clone();
-                                    task_history::update_task_history(
-                                        state::SETTINGS.read().days_to_show,
-                                    );
+                                    task_history::update_task_history(state::SETTINGS.read().days_to_show);
                                     sync_after_change();
                                 }
                                 fn close_alert() {
@@ -473,9 +463,7 @@ fn GroupDetailsSheet(task_group: Option<FurTaskGroup>) -> Element {
                                         let mut new_sheets = state::SHEETS.cloned();
                                         new_sheets.group_details_sheet = None;
                                         *state::SHEETS.write() = new_sheets;
-                                        task_history::update_task_history(
-                                            state::SETTINGS.read().days_to_show,
-                                        );
+                                        task_history::update_task_history(state::SETTINGS.read().days_to_show);
                                         sync_after_change();
                                     }
                                 }
@@ -557,9 +545,7 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                                 *TASK_IDS_TO_DELETE.write() = None;
                                 alert.close();
                                 *state::ALERT.write() = alert.clone();
-                                task_history::update_task_history(
-                                    state::SETTINGS.read().days_to_show,
-                                );
+                                task_history::update_task_history(state::SETTINGS.read().days_to_show);
                                 sync_after_change();
                             }
                             fn close_alert() {
@@ -585,9 +571,7 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                                 let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.task_edit_sheet = None;
                                 *state::SHEETS.write() = new_sheets;
-                                task_history::update_task_history(
-                                    state::SETTINGS.read().days_to_show,
-                                );
+                                task_history::update_task_history(state::SETTINGS.read().days_to_show);
                                 sync_after_change();
                             }
                         },
@@ -831,9 +815,7 @@ fn AddToGroupSheet(group: Option<FurTaskGroup>) -> Element {
                                 new_sheets.group_details_sheet = None;
                                 new_sheets.add_to_group_sheet = None;
                                 *state::SHEETS.write() = new_sheets;
-                                task_history::update_task_history(
-                                    state::SETTINGS.read().days_to_show,
-                                );
+                                task_history::update_task_history(state::SETTINGS.read().days_to_show);
                                 sync_after_change();
                             }
                         }
@@ -894,9 +876,7 @@ fn EditGroupSheet(group: Option<FurTaskGroup>) -> Element {
                         new_sheets.group_details_sheet = None;
                         new_sheets.edit_group_sheet = None;
                         *state::SHEETS.write() = new_sheets;
-                        task_history::update_task_history(
-                            state::SETTINGS.read().days_to_show,
-                        );
+                        task_history::update_task_history(state::SETTINGS.read().days_to_show);
                         sync_after_change();
                     },
                     {loc!("save")}

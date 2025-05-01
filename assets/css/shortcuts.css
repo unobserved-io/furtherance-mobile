@@ -17,8 +17,8 @@
 }
 
 .top-shortcut-buttons {
-    float: right;
-    margin-bottom: 1rem;
+    display: flex;
+    justify-content: flex-end;
 }
 
 @keyframes wiggle {

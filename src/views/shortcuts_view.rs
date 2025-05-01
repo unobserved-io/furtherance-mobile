@@ -114,8 +114,7 @@ pub fn ShortcutItem(shortcut: FurShortcut, edit_mode: Signal<bool>) -> Element {
 
     rsx! {
         button {
-            class: if edit_mode.cloned()
-    && state::SHEETS.read().edit_shortcut_sheet.is_none() { "shortcut-bubble wiggle" } else { "shortcut-bubble" },
+            class: if edit_mode.cloned() && state::SHEETS.read().edit_shortcut_sheet.is_none() { "shortcut-bubble wiggle" } else { "shortcut-bubble" },
             style: bg_color,
             onclick: move |_| {
                 if edit_mode.cloned() {
