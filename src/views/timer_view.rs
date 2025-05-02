@@ -141,13 +141,24 @@ pub fn TaskInput() -> Element {
                 value: "{state::TASK_INPUT}",
                 oninput: move |event| {
                     let new_value = validate_task_input(event.value());
-                    *state::TASK_INPUT.write() = new_value.clone();
+                    let old_value = state::TASK_INPUT.cloned();
+                    println!("NEW VALUE: {}", new_value);
+
                     if state::TIMER_IS_RUNNING.cloned() {
-                        if let Err(e) = database::persistence::update_persisting_timer_task_input(
-                            &new_value,
-                        ) {
-                            eprintln!("Error updating persisting timer task input: {}", e);
+                        if new_value.trim().is_empty() {
+                            println!("New_val empty");
+                            event.prevent_default();
+                            *state::TASK_INPUT.write() = old_value.clone();
+                        } else {
+                            *state::TASK_INPUT.write() = new_value.clone();
+                            if let Err(e) = database::persistence::update_persisting_timer_task_input(
+                                &new_value,
+                            ) {
+                                eprintln!("Error updating persisting timer task input: {}", e);
+                            }
                         }
+                    } else {
+                        *state::TASK_INPUT.write() = new_value.clone();
                     }
                 },
                 placeholder: loc!("task-input-placeholder"),
@@ -541,6 +552,7 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                                 let mut alert = state::ALERT.cloned();
                                 let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.task_edit_sheet = None;
+                                new_sheets.group_details_sheet = None;
                                 *state::SHEETS.write() = new_sheets;
                                 *TASK_IDS_TO_DELETE.write() = None;
                                 alert.close();
@@ -570,6 +582,7 @@ fn TaskEditSheet(task: Option<FurTask>) -> Element {
                                 }
                                 let mut new_sheets = state::SHEETS.cloned();
                                 new_sheets.task_edit_sheet = None;
+                                new_sheets.group_details_sheet = None;
                                 *state::SHEETS.write() = new_sheets;
                                 task_history::update_task_history(state::SETTINGS.read().days_to_show);
                                 sync_after_change();
