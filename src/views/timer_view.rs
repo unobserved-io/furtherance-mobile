@@ -67,7 +67,7 @@ pub fn TimerView() -> Element {
         TaskInput {}
         TaskHistory {}
 
-        div { class: if sheets.new_task_is_shown || sheets.group_details_sheet.is_some() { "overlay visible" } else { "overlay" },
+        div { class: if sheets.new_task_is_shown || sheets.group_details_sheet.is_some() || sheets.task_edit_sheet.is_some() { "overlay visible" } else { "overlay" },
             ""
         }
         div { class: if sheets.new_task_is_shown { "sheet visible" } else { "sheet" }, NewTaskSheet {} }
@@ -142,11 +142,9 @@ pub fn TaskInput() -> Element {
                 oninput: move |event| {
                     let new_value = validate_task_input(event.value());
                     let old_value = state::TASK_INPUT.cloned();
-                    println!("NEW VALUE: {}", new_value);
 
                     if state::TIMER_IS_RUNNING.cloned() {
                         if new_value.trim().is_empty() {
-                            println!("New_val empty");
                             event.prevent_default();
                             *state::TASK_INPUT.write() = old_value.clone();
                         } else {

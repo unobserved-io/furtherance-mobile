@@ -143,7 +143,7 @@ pub fn start_timer() {
     }
 }
 
-fn reset_timer() {
+pub fn reset_timer() {
     *state::TASK_INPUT.write() = String::new();
     *state::TIMER_TEXT.write() = get_timer_text(0);
     reset_persisting_timer();

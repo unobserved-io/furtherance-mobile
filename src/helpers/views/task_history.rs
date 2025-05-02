@@ -17,7 +17,7 @@
 use std::collections::BTreeMap;
 
 use chrono::Local;
-use dioxus::signals::Readable;
+use dioxus::{prelude::spawn_forever, signals::Readable};
 
 use crate::{
     database::{
@@ -75,9 +75,11 @@ fn group_tasks_by_date(tasks: Vec<FurTask>) -> BTreeMap<chrono::NaiveDate, Vec<F
 }
 
 pub fn update_task_history(days_to_show: i64) {
-    let task_history = get_task_history(days_to_show);
-    *state::TASKS.write() = task_history.clone();
-    update_todos_after_refresh(days_to_show);
+    spawn_forever(async move {
+        let task_history = get_task_history(days_to_show);
+        *state::TASKS.write() = task_history.clone();
+        update_todos_after_refresh(days_to_show);
+    });
 }
 
 pub fn update_todos_after_refresh(days_to_show: i64) {

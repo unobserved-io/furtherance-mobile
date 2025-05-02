@@ -17,7 +17,10 @@
 use chrono::Local;
 use dioxus::signals::Readable;
 
-use crate::{state, NavTab};
+use crate::{
+    helpers::views::timer::{reset_timer, stop_timer},
+    state, NavTab,
+};
 
 use super::{
     server::sync::sync_after_change,
@@ -26,27 +29,27 @@ use super::{
 
 pub fn start_stop_pressed() {
     if state::TIMER_IS_RUNNING.cloned() {
+        let mut pomodoro = state::POMODORO.cloned();
         // Do not move declarations to after if else
         // They are needed in this position to properly initiate timer on reset
+        if pomodoro.on_break {
+            *state::TIMER_IS_RUNNING.write() = false;
+            pomodoro.on_break = false;
+            pomodoro.snoozed = false;
+            pomodoro.sessions = 0;
+            *state::POMODORO.write() = pomodoro.clone();
+            reset_timer();
+            task_history::update_task_history(state::SETTINGS.read().days_to_show);
+        } else {
+            pomodoro.on_break = false;
+            pomodoro.snoozed = false;
+            pomodoro.sessions = 0;
+            *state::POMODORO.write() = pomodoro.clone();
+            stop_timer(Local::now());
+            task_history::update_task_history(state::SETTINGS.read().days_to_show);
 
-        // TODO: Pomodoro
-        // if self.pomodoro.on_break {
-        //     self.timer_is_running = false;
-        //     self.pomodoro.on_break = false;
-        //     self.pomodoro.snoozed = false;
-        //     self.pomodoro.sessions = 0;
-        //     reset_timer(self);
-        //     return messages::update_task_history(self.fur_settings.days_to_show);
-        // } else {
-        //     self.pomodoro.on_break = false;
-        //     self.pomodoro.snoozed = false;
-        //     self.pomodoro.sessions = 0;
-        timer::stop_timer(Local::now());
-
-        task_history::update_task_history(state::SETTINGS.read().days_to_show);
-
-        sync_after_change();
-        // }
+            sync_after_change();
+        }
     } else {
         timer::start_timer();
     }
