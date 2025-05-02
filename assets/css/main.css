@@ -52,7 +52,7 @@ body::-webkit-scrollbar {
     justify-content: center;
     flex: 1;
     text-align: center;
-    padding: 8px 0;
+    padding-top: 8px;
     color: #8e8e93;
     transition: color 0.2s;
     cursor: pointer;
