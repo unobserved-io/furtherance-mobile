@@ -9,40 +9,23 @@ html {
 
 html,
 body {
+    font-family: sans-serif;
+    height: 100%;
+    width: 100%;
+    overflow: auto;
     margin: 0;
-    padding: 0 0.2rem;
-    /*overflow-x: hidden;
-    height: 100%;*/
-}
-
-body {
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    position: relative;
-    overscroll-behavior: none;
+    padding: 0;
 }
 
 body::-webkit-scrollbar {
     display: none;
 }
 
-
-
-.bottom-nav {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    background-color: white;
-}
-
-/*
 #page-content {
-    padding-bottom: 80px;
-    max-height: calc(100vh - 80px);
-    overflow-y: auto;
-    position: relative;
+    padding: 0 0.2rem 4rem 0.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .bottom-nav {
@@ -82,7 +65,7 @@ body::-webkit-scrollbar {
 .nav-label {
     font-size: 12px;
     font-weight: 500;
-}*/
+}
 
 .bold {
     font-weight: bold;
@@ -96,6 +79,7 @@ body::-webkit-scrollbar {
     background-color: transparent;
     fill: --var(primary-color);
     color: var(--primary-color);
+    border: none;
 }
 
 button.no-bg-button,

@@ -1,14 +1,11 @@
-.shortcut-bubble:first-child {
-    margin-top: 0.2rem;
-}
-
 .shortcut-bubble {
     display: flex;
     align-items: center;
     padding: 0.2rem 1rem;
     text-align: left;
     background: lightgray;
-    margin-bottom: 10px;
+    margin-bottom: 0.7rem;
+    border-width: 0;
     border-radius: 1rem;
     min-height: 3rem;
     width: 100%;
@@ -23,6 +20,7 @@
 .top-shortcut-buttons {
     display: flex;
     justify-content: flex-end;
+    margin-bottom: 0.5rem;
 }
 
 @keyframes wiggle {
