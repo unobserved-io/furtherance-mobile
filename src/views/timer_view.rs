@@ -67,9 +67,6 @@ pub fn TimerView() -> Element {
         TaskInput {}
         TaskHistory {}
 
-        div { class: if sheets.new_task_is_shown || sheets.group_details_sheet.is_some() || sheets.task_edit_sheet.is_some() { "overlay visible" } else { "overlay" },
-            ""
-        }
         div { class: if sheets.new_task_is_shown { "sheet visible" } else { "sheet" }, NewTaskSheet {} }
         div { class: if sheets.group_details_sheet.is_some() && sheets.task_edit_sheet.is_none()
     && sheets.add_to_group_sheet.is_none() && sheets.edit_group_sheet.is_none() { "sheet visible" } else { "sheet" },

@@ -11,8 +11,8 @@ html,
 body {
     margin: 0;
     padding: 0 0.2rem;
-    overflow-x: hidden;
-    height: 100%;
+    /*overflow-x: hidden;
+    height: 100%;*/
 }
 
 body {
@@ -25,6 +25,19 @@ body::-webkit-scrollbar {
     display: none;
 }
 
+
+
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: white;
+}
+
+/*
 #page-content {
     padding-bottom: 80px;
     max-height: calc(100vh - 80px);
@@ -41,7 +54,7 @@ body::-webkit-scrollbar {
     justify-content: space-around;
     background-color: white;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    padding: 10px 0 0 0;
+    padding: 1rem 0 0 0;
     z-index: 1000;
 }
 
@@ -52,7 +65,6 @@ body::-webkit-scrollbar {
     justify-content: center;
     flex: 1;
     text-align: center;
-    padding-top: 8px;
     color: #8e8e93;
     transition: color 0.2s;
     cursor: pointer;
@@ -70,7 +82,7 @@ body::-webkit-scrollbar {
 .nav-label {
     font-size: 12px;
     font-weight: 500;
-}
+}*/
 
 .bold {
     font-weight: bold;
