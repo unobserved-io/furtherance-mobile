@@ -413,7 +413,8 @@ pub fn SettingsView() -> Element {
                 }
             }
 
-            // TODO: Make these function (need access to file browser/share sheet)
+            // Activate in a future release
+            /*
             SettingsTitleRow { title: loc!("csv") }
             div { class: "settings-group",
                 SettingsButtonRow {
@@ -435,7 +436,7 @@ pub fn SettingsView() -> Element {
                     dangerous: true,
                     onclick: move |_| {},
                 }
-            }
+            }*/
         }
     }
 }
