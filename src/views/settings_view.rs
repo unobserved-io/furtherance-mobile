@@ -347,7 +347,7 @@ pub fn SettingsView() -> Element {
                     value: days_to_show,
                     onupdate: move |(delta, _)| {
                         let mut settings_clone = state::SETTINGS.cloned();
-                        match settings_clone.change_pomodoro_length(&(days_to_show + delta)) {
+                        match settings_clone.change_days_to_show(&(days_to_show + delta)) {
                             Ok(_) => *state::SETTINGS.write() = settings_clone,
                             Err(e) => eprintln!("Error: {}", e),
                         }
