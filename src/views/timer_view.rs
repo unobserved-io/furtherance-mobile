@@ -62,6 +62,15 @@ pub fn TimerView() -> Element {
     rsx! {
         document::Stylesheet { href: SHEET_CSS }
 
+        div {
+            class: if sheets.new_task_is_shown || sheets.group_details_sheet.is_some() || sheets.task_edit_sheet.is_some() {
+                "overlay visible"
+            } else {
+                "overlay"
+            },
+            ""
+        }
+
         AddNewTask {}
         Timer {}
         TaskInput {}
