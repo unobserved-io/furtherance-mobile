@@ -66,10 +66,8 @@ pub fn SettingsView() -> Element {
     rsx! {
         document::Stylesheet { href: SETTINGS_CSS }
 
-        // TODO: Localize labels/text
-
         div { id: "settings",
-            SettingsTitleRow { title: "Sync".to_string() }
+            SettingsTitleRow { title: loc!("sync") }
             div { class: "settings-group",
                 SettingsDropDownRow {
                     label: loc!("server"),
@@ -116,10 +114,10 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsInputRow {
-                    label: "Encryption key".to_string(),
+                    label: loc!("encryption-key"),
                     input_type: "password".to_string(),
                     value: state::USER_FIELDS.read().encryption_key.clone(),
-                    placeholder: "Key".to_string(),
+                    placeholder: loc!("key"),
                     oninput: move |event: Event<FormData>| {
                         let mut user_fields_clone = state::USER_FIELDS.cloned();
                         user_fields_clone.encryption_key = event.value();
@@ -170,10 +168,10 @@ pub fn SettingsView() -> Element {
                 }
             }
 
-            SettingsTitleRow { title: "Pomodoro Timer".to_string() }
+            SettingsTitleRow { title: loc!("pomodoro-timer") }
             div { class: "settings-group",
                 SettingsToggleRow {
-                    label: "Countdown timer".to_string(),
+                    label: loc!("countdown-timer"),
                     toggled: pomodoro,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -184,7 +182,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsNumberRow {
-                    label: "Timer length".to_string(),
+                    label: loc!("timer-length"),
                     value: pomodoro_length,
                     onupdate: move |(delta, _)| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -195,7 +193,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsNumberRow {
-                    label: "Break length".to_string(),
+                    label: loc!("break-length"),
                     value: pomodoro_break_length,
                     onupdate: move |(delta, _)| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -208,7 +206,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsNumberRow {
-                    label: "Snooze length".to_string(),
+                    label: loc!("snooze-length"),
                     value: pomodoro_snooze_length,
                     onupdate: move |(delta, _)| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -221,7 +219,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsToggleRow {
-                    label: "Extended breaks".to_string(),
+                    label: loc!("extended-breaks"),
                     toggled: pomodoro_extended_breaks,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -233,7 +231,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsNumberRow {
-                    label: "Extended break interval".to_string(),
+                    label: loc!("extended-break-interval"),
                     value: pomodoro_extended_break_interval,
                     onupdate: move |(delta, _)| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -248,7 +246,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsNumberRow {
-                    label: "Extended break length".to_string(),
+                    label: loc!("extended-break-length"),
                     value: pomodoro_extended_break_length,
                     onupdate: move |(delta, _)| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -264,10 +262,10 @@ pub fn SettingsView() -> Element {
                 }
             }
 
-            SettingsTitleRow { title: "Interface".to_string() }
+            SettingsTitleRow { title: loc!("interface") }
             div { class: "settings-group",
                 SettingsToggleRow {
-                    label: "Show delete confirmation".to_string(),
+                    label: loc!("show-delete-confirmation"),
                     toggled: show_delete_confirmation,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -280,10 +278,10 @@ pub fn SettingsView() -> Element {
                 }
             }
 
-            SettingsTitleRow { title: "Task History".to_string() }
+            SettingsTitleRow { title: loc!("task-history") }
             div { class: "settings-group",
                 SettingsToggleRow {
-                    label: "Show project".to_string(),
+                    label: loc!("show-project"),
                     toggled: show_task_project,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -293,7 +291,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsToggleRow {
-                    label: "Show tags".to_string(),
+                    label: loc!("show-tags"),
                     toggled: show_task_tags,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -303,7 +301,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsToggleRow {
-                    label: "Show earnings".to_string(),
+                    label: loc!("show-earnings"),
                     toggled: show_task_earnings,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -313,7 +311,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsToggleRow {
-                    label: "Show seconds".to_string(),
+                    label: loc!("show-seconds"),
                     toggled: show_seconds,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -323,7 +321,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsToggleRow {
-                    label: "Show daily time total".to_string(),
+                    label: loc!("show-daily-time-total"),
                     toggled: show_daily_time_total,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -335,7 +333,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsToggleRow {
-                    label: "Dynamic total".to_string(), // TODO: Add sublabel
+                    label: loc!("dynamic-time-total"), // TODO: Add sublabel
                     toggled: dynamic_total,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -345,7 +343,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsNumberRow {
-                    label: "Days to show".to_string(),
+                    label: loc!("days-to-show"),
                     value: days_to_show,
                     onupdate: move |(delta, _)| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -357,10 +355,10 @@ pub fn SettingsView() -> Element {
                 }
             }
 
-            SettingsTitleRow { title: "Todos".to_string() }
+            SettingsTitleRow { title: loc!("todos") }
             div { class: "settings-group",
                 SettingsToggleRow {
-                    label: "Show project".to_string(),
+                    label: loc!("show-project"),
                     toggled: show_todo_project,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -370,7 +368,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsToggleRow {
-                    label: "Show tags".to_string(),
+                    label: loc!("show-tags"),
                     toggled: show_todo_tags,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -380,7 +378,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsToggleRow {
-                    label: "Show earnings".to_string(),
+                    label: loc!("show-earnings"),
                     toggled: show_todo_rate,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -391,10 +389,10 @@ pub fn SettingsView() -> Element {
                 }
             }
 
-            SettingsTitleRow { title: "Idle".to_string() }
+            SettingsTitleRow { title: loc!("idle") }
             div { class: "settings-group",
                 SettingsToggleRow {
-                    label: "Show tags".to_string(),
+                    label: loc!("show-tags"),
                     toggled: show_todo_tags,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -404,7 +402,7 @@ pub fn SettingsView() -> Element {
                     },
                 }
                 SettingsToggleRow {
-                    label: "Show earnings".to_string(),
+                    label: loc!("show-earnings"),
                     toggled: show_todo_rate,
                     onchange: move |_| {
                         let mut settings_clone = state::SETTINGS.cloned();
@@ -416,24 +414,24 @@ pub fn SettingsView() -> Element {
             }
 
             // TODO: Make these function (need access to file browser/share sheet)
-            SettingsTitleRow { title: "CSV".to_string() }
+            SettingsTitleRow { title: loc!("csv") }
             div { class: "settings-group",
                 SettingsButtonRow {
-                    label: "Import CSV".to_string(),
+                    label: loc!("import-csv"),
                     dangerous: false,
                     onclick: move |_| {},
                 }
                 SettingsButtonRow {
-                    label: "Export CSV".to_string(),
+                    label: loc!("export-csv"),
                     dangerous: false,
                     onclick: move |_| {},
                 }
             }
 
-            SettingsTitleRow { title: "Danger Zone".to_string() }
+            SettingsTitleRow { title: loc!("danger-zone") }
             div { class: "settings-group",
                 SettingsButtonRow {
-                    label: "Delete Everything".to_string(),
+                    label: loc!("delete-everything"),
                     dangerous: true,
                     onclick: move |_| {},
                 }
