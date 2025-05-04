@@ -1,10 +1,9 @@
-#timer {
-    margin: auto;
-    width: 50%;
-}
-
 .timer-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-size: 12vw;
+    font-family: monospace;
     margin: 0;
     padding: 0;
     font-weight: bold;
