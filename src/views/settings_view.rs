@@ -389,30 +389,6 @@ pub fn SettingsView() -> Element {
                 }
             }
 
-            SettingsTitleRow { title: loc!("idle") }
-            div { class: "settings-group",
-                SettingsToggleRow {
-                    label: loc!("show-tags"),
-                    toggled: show_todo_tags,
-                    onchange: move |_| {
-                        let mut settings_clone = state::SETTINGS.cloned();
-                        if let Ok(_) = settings_clone.change_show_todo_tags(&!show_todo_tags) {
-                            *state::SETTINGS.write() = settings_clone;
-                        }
-                    },
-                }
-                SettingsToggleRow {
-                    label: loc!("show-earnings"),
-                    toggled: show_todo_rate,
-                    onchange: move |_| {
-                        let mut settings_clone = state::SETTINGS.cloned();
-                        if let Ok(_) = settings_clone.change_show_todo_rate(&!show_todo_rate) {
-                            *state::SETTINGS.write() = settings_clone;
-                        }
-                    },
-                }
-            }
-
             // Activate in a future release
             /*
             SettingsTitleRow { title: loc!("csv") }
