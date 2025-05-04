@@ -173,6 +173,7 @@ input:checked + .slider:before {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    caret-color: var(--primary-color);
 }
 
 .settings-input:focus {
