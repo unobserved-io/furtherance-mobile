@@ -39,3 +39,7 @@ icon = [
 copyright = "Copyright 2025 Unobserved"
 category = "Productivity"
 short_description = "Track your time without being tracked"
+long_description = """
+Furtherance is a time tracking application that respects your privacy.
+It allows you to track time spent on different activities without worrying about your data being captured and sold.
+"""
