@@ -64,7 +64,7 @@ mod constants;
 mod localization;
 mod state;
 
-use constants::{ALERT_CSS, FAVICON, MAIN_CSS, TIMER_CSS};
+use constants::{ALERT_CSS, MAIN_CSS, TIMER_CSS};
 use database::init::db_init;
 use dioxus::prelude::*;
 use dioxus_free_icons::{
@@ -110,7 +110,6 @@ fn App() -> Element {
     let sheets = state::SHEETS.cloned();
 
     rsx! {
-        document::Link { rel: "icon", href: FAVICON }
         document::Stylesheet { href: MAIN_CSS }
         document::Stylesheet { href: TIMER_CSS }
         document::Stylesheet { href: ALERT_CSS }

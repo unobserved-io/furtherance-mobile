@@ -31,7 +31,6 @@ pub const SETTINGS_MESSAGE_DURATION: u64 = 8;
 pub const OFFICIAL_SERVER: &str = "https://sync.furtherance.app";
 
 // Assets
-pub const FAVICON: Asset = asset!("/assets/favicon.ico");
 pub const MAIN_CSS: Asset = asset!("/assets/css/main.css");
 pub const TIMER_CSS: Asset = asset!("/assets/css/timer.css");
 pub const TODO_CSS: Asset = asset!("/assets/css/todo.css");
