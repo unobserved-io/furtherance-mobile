@@ -368,6 +368,7 @@ fn EditTodoSheet(todo: Option<FurTodo>) -> Element {
                                         new_todo.tags = tags;
                                         new_todo.rate = rate;
                                         new_todo.date = parsed_datetime;
+                                        new_todo.last_updated = chrono::Utc::now().timestamp();
                                         if let Err(e) = database::todos::update_todo(&new_todo) {
                                             eprintln!("Error updating todo in database: {}", e);
                                         }
