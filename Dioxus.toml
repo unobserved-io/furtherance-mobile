@@ -19,3 +19,23 @@ script = []
 # Javascript code file
 # serve: [dev-server] only
 script = []
+
+[bundle]
+identifier = "io.unobserved.furtherance"
+publisher = "Unobserved"
+icon = [
+    "assets/icon/16x16.png",
+    "assets/icon/16x16@2x.png",
+    "assets/icon/32x32.png",
+    "assets/icon/32x32@2x.png",
+    "assets/icon/128x128.png",
+    "assets/icon/128x128@2x.png",
+    "assets/icon/256x256.png",
+    "assets/icon/256x256@2x.png",
+    "assets/icon/512x512.png",
+    "assets/icon/512x512@2x.png",
+    "assets/icon/icon.icns",
+]
+copyright = "Copyright 2025 Unobserved"
+category = "Productivity"
+short_description = "Track your time without being tracked"

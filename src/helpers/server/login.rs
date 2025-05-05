@@ -20,9 +20,18 @@ use dioxus::{prelude::spawn, signals::Readable};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::{database, helpers::server::sync::reset_user, state};
+use crate::{
+    database,
+    helpers::server::sync::{reset_user, set_negative_sync_message},
+    loc,
+    localization::Localization,
+    state,
+};
 
-use super::encryption::{self, generate_device_id};
+use super::{
+    encryption::{self, generate_device_id},
+    sync::set_positive_sync_messsage,
+};
 
 #[derive(Clone, Debug)]
 pub enum ApiError {
@@ -68,8 +77,7 @@ pub fn login_button_pressed() {
     let encryption_key = user_fields.encryption_key.clone();
     let server = user_fields.server.clone();
 
-    // TODO: Set login message
-    // self.login_message = Ok(self.localization.get_message("logging-in", None));
+    set_positive_sync_messsage(loc!("logging-in"));
 
     spawn(async {
         let login_response = login(email, encryption_key, server).await;
@@ -124,12 +132,7 @@ fn complete_login(response_result: Result<LoginResponse, ApiError>) {
                             Err(e) => eprintln!("Error deleting user credentials: {}", e),
                         };
                         *state::USER.write() = None;
-                        // TODO: Error message
-                        // return messages::set_negative_temp_notice(
-                        //     &mut self.login_message,
-                        //     self.localization
-                        //         .get_message("error-storing-credentials", None),
-                        // );
+                        set_negative_sync_message(loc!("error-storing-credentials"));
                         return;
                     }
                 };
@@ -146,12 +149,7 @@ fn complete_login(response_result: Result<LoginResponse, ApiError>) {
             ) {
                 eprintln!("Error storing user credentials: {}", e);
                 reset_user();
-                // TODO: Error message
-                // return messages::set_negative_temp_notice(
-                //     &mut self.login_message,
-                //     self.localization
-                //         .get_message("error-storing-credentials", None),
-                // );
+                set_negative_sync_message(loc!("error-storing-credentials"));
                 return;
             }
 
@@ -170,12 +168,7 @@ fn complete_login(response_result: Result<LoginResponse, ApiError>) {
                 Err(e) => {
                     eprintln!("Error retrieving user credentials from database: {}", e);
                     reset_user();
-                    // TODO: Error message
-                    // return messages::set_negative_temp_notice(
-                    //     &mut self.login_message,
-                    //     self.localization
-                    //         .get_message("error-storing-credentials", None),
-                    // );
+                    set_negative_sync_message(loc!("error-storing-credentials"));
                     return;
                 }
             };
@@ -186,12 +179,7 @@ fn complete_login(response_result: Result<LoginResponse, ApiError>) {
                 user_fields_clone.encryption_key = "x".repeat(key_length);
                 user_fields_clone.server = user.server;
                 *state::USER_FIELDS.write() = user_fields_clone;
-
-                // TODO: Complete message
-                // tasks.push(messages::set_positive_temp_notice(
-                //     &mut self.login_message,
-                //     self.localization.get_message("login-successful", None),
-                // ));
+                set_positive_sync_messsage(loc!("login-successful"));
                 super::sync::sync_after_change();
             }
         }
@@ -200,20 +188,11 @@ fn complete_login(response_result: Result<LoginResponse, ApiError>) {
             reset_user();
             match e {
                 ApiError::Network(e) if e.to_string() == "builder error" => {
-                    // TODO: Error message
-                    // return messages::set_negative_temp_notice(
-                    //     &mut self.login_message,
-                    //     self.localization
-                    //         .get_message("server-must-contain-protocol", None),
-                    // );
+                    set_negative_sync_message(loc!("server-must-contain-protocol"));
                     return;
                 }
                 _ => {
-                    // TODO: Error message
-                    // return messages::set_negative_temp_notice(
-                    //     &mut self.login_message,
-                    //     self.localization.get_message("login-failed", None),
-                    // );
+                    set_negative_sync_message(loc!("login-failed"));
                     return;
                 }
             }

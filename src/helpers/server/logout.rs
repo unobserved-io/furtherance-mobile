@@ -20,11 +20,13 @@ use serde::Serialize;
 
 use crate::{
     helpers::server::encryption,
+    loc,
+    localization::Localization,
     models::fur_user::{FurUser, FurUserFields},
     state,
 };
 
-use super::sync::reset_user;
+use super::sync::{reset_user, set_positive_sync_messsage};
 
 #[derive(Serialize)]
 pub struct LogoutRequest {
@@ -65,9 +67,5 @@ pub async fn server_logout(user: &FurUser) {
 pub fn logout_complete() {
     reset_user();
     *state::USER_FIELDS.write() = FurUserFields::default();
-    // TODO: Set message
-    // return messages::set_positive_temp_notice(
-    //     &mut self.login_message,
-    //     self.localization.get_message("logged-out", None),
-    // );
+    set_positive_sync_messsage(loc!("logged-out"));
 }
