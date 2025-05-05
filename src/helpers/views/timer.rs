@@ -17,7 +17,10 @@
 use std::time::Duration;
 
 use chrono::{DateTime, Local, TimeDelta};
-use dioxus::{prelude::spawn, signals::Readable};
+use dioxus::{
+    prelude::{spawn, spawn_forever},
+    signals::Readable,
+};
 use std::sync::Once;
 
 use crate::{
@@ -248,8 +251,7 @@ fn stop_pomodoro_timer() {
     pomodoro.sessions = 0;
     *state::POMODORO.write() = pomodoro;
     update_task_history(settings.days_to_show);
-    // TODO: Test if this updates state (i.e. if it loads a new task we didn't have):
-    spawn(async move {
+    spawn_forever(async move {
         request_sync();
     });
 }
@@ -269,8 +271,7 @@ fn start_break() {
     *state::ALERT.write() = alert;
     start_timer();
     update_task_history(settings.days_to_show);
-    // TODO: Test if this updates state (i.e. if it loads a new task we didn't have):
-    spawn(async move {
+    spawn_forever(async move {
         request_sync();
     });
 }

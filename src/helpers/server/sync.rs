@@ -542,8 +542,7 @@ fn process_sync_result(sync_result: (Result<SyncResponse, ApiError>, usize)) {
             settings.needs_full_sync = false;
             *state::SETTINGS.write() = settings.clone();
 
-            // TODO: Check if these are updated since they run async
-            spawn(async move {
+            spawn_forever(async move {
                 helpers::views::todos::update_all_todos();
                 helpers::views::task_history::update_task_history(settings.days_to_show);
                 helpers::views::shortcuts::update_all_shortcuts();
