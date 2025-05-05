@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use chrono::Local;
 use rusqlite::{params, Connection, Result};
 use std::path::PathBuf;
 
@@ -115,8 +116,8 @@ pub fn db_init() -> Result<()> {
             is_running,
             task_input,
             start_time
-        ) values (1, ?1, NULL, NULL)",
-        params![false],
+        ) values (1, ?1, ?2, ?3)",
+        params![false, String::new(), Local::now()],
     )?;
 
     Ok(())
