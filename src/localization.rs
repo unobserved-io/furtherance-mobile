@@ -114,11 +114,7 @@ impl Localization {
         }
 
         // Prevent odd symbols in iced
-        // TODO: Try to remove in Dioxus
-        formatted
-            .to_string()
-            .replace('\u{2068}', "")
-            .replace('\u{2069}', "")
+        formatted.to_string()
     }
 }
 
