@@ -22,7 +22,7 @@ body::-webkit-scrollbar {
 }
 
 #page-content {
-    padding: 0 0.5rem 4rem 0.5rem;
+    padding: 0 0.5rem 4rem 0.5rem;    
     display: flex;
     flex-direction: column;
     justify-content: space-between;
