@@ -21,16 +21,13 @@ use chrono::{
     TimeZone,
 };
 use dioxus::prelude::*;
-use dioxus_free_icons::{
-    icons::bs_icons::{BsPencil, BsPlayFill, BsPlusLg, BsStopFill, BsTrash3, BsXLg},
-    Icon,
-};
 use fluent::FluentValue;
 
 use crate::{
     constants::SHEET_CSS,
     helpers::{
         actions, formatters,
+        icons::{BsPencil, BsPlayFill, BsPlusLg, BsStopFill, BsTrash3, BsXLg, Icon},
         views::{task_input::validate_task_input, timer::get_stopped_timer_text},
     },
 };

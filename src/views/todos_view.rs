@@ -16,14 +16,14 @@
 
 use chrono::{offset::LocalResult, Local, NaiveDate, TimeZone};
 use dioxus::prelude::*;
-use dioxus_free_icons::{
-    icons::bs_icons::{BsCheckSquare, BsPlayFill, BsPlusLg, BsSquare, BsTrash3},
-    Icon,
-};
 
 use crate::{
     constants::TODO_CSS,
-    helpers::{server::sync::sync_after_change, views::todos::update_all_todos},
+    helpers::{
+        icons::{BsCheckSquare, BsPlayFill, BsPlusLg, BsSquare, BsTrash3, Icon},
+        server::sync::sync_after_change,
+        views::todos::update_all_todos,
+    },
     loc,
     localization::Localization,
     state::{self, TODO_ID_TO_DELETE},

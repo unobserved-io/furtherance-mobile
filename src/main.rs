@@ -38,6 +38,7 @@ mod helpers {
     pub mod actions;
     pub mod color_utils;
     pub mod formatters;
+    pub mod icons;
     pub mod view_enums;
     pub mod views {
         pub mod settings;
@@ -67,11 +68,12 @@ mod state;
 use constants::{ALERT_CSS, MAIN_CSS, TIMER_CSS};
 use database::init::db_init;
 use dioxus::prelude::*;
-use dioxus_free_icons::{
-    icons::bs_icons::{BsBookmark, BsCheck2Circle, BsGear, BsHourglassSplit},
-    Icon, IconShape,
+use helpers::{
+    formatters,
+    icons::{BsBookmark, BsCheck2Circle, BsGear, BsHourglassSplit, Icon, IconShape},
+    server::sync::schedule_sync,
+    views::timer::ensure_timer_running,
 };
-use helpers::{formatters, server::sync::schedule_sync, views::timer::ensure_timer_running};
 use state::ACTIVE_TAB;
 use views::{
     settings_view::SettingsView, shortcuts_view::ShortcutsView, timer_view::TimerView,

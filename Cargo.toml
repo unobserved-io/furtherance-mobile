@@ -30,7 +30,6 @@ blake3 = "1.5"
 chrono = { version = "0.4", features = ["alloc", "serde"] }
 config = "0.14"
 dioxus = { version = "0.6.3", features = [] }
-dioxus-free-icons = { version = "0.9", features = ["bootstrap"] }
 directories = "5.0"
 fluent = "0.16"
 itertools = "0.13"

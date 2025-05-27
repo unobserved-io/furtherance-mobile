@@ -15,10 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use dioxus::prelude::*;
-use dioxus_free_icons::{
-    icons::bs_icons::{BsPencil, BsPencilFill, BsPlusLg, BsTrash3},
-    Icon,
-};
 use palette::{color_difference::Wcag21RelativeContrast, Srgb};
 use rand::Rng;
 
@@ -29,6 +25,7 @@ use crate::{
         actions,
         color_utils::FromHex,
         formatters,
+        icons::{BsPencil, BsPencilFill, BsPlusLg, BsTrash3, Icon},
         server::sync::sync_after_change,
         views::{shortcuts::update_all_shortcuts, task_input::validate_task_input},
     },
