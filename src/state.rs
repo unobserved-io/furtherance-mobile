@@ -17,10 +17,7 @@
 use std::collections::BTreeMap;
 
 use chrono::{DateTime, Local, NaiveDate};
-use dioxus::{
-    hooks::{use_context_provider, use_signal},
-    signals::{Global, GlobalSignal, Signal},
-};
+use dioxus::signals::{Global, GlobalSignal};
 
 use crate::{
     helpers::{
