@@ -29,7 +29,7 @@ base64 = "0.22"
 blake3 = "1.5"
 chrono = { version = "0.4", features = ["alloc", "serde"] }
 config = "0.14"
-dioxus = { version = "0.6.3", features = [] }
+dioxus = { version = "0.7.0-alpha.0", features = [] }
 directories = "5.0"
 fluent = "0.16"
 itertools = "0.13"
