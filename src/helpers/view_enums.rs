@@ -28,16 +28,6 @@ pub enum FurView {
     Settings,
 }
 
-impl FurView {
-    pub const ALL: [FurView; 5] = [
-        FurView::Shortcuts,
-        FurView::Timer,
-        FurView::Todo,
-        FurView::Report,
-        FurView::Settings,
-    ];
-}
-
 impl std::fmt::Display for FurView {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
